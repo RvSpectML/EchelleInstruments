@@ -1,0 +1,7 @@
+name = "EchelleInstruments"
+uuid = "533b6e3a-cbf4-4a92-8a96-bc27ebcb1598"
+authors = ["Eric Ford"]
+version = "0.0.1"
+
+[compat]
+julia = "1.5"
