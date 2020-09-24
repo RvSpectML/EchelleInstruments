@@ -6,9 +6,6 @@ Author: Eric Ford
 Created: August 2020
 """
 
-using DataFrames, FITSIO
-using CSV #, Interpolations
-
 have_issued_expres_bjd_warning = false
 
 """Create Dataframe containing filenames and key data for all files neid*.fits in directory"""

@@ -14,7 +14,9 @@ import RvSpectMLBase: AbstractInstrument, AbstractInstrument1D, AbstractInstrume
 import ..EchelleInstruments: read_manifest, read_metadata_from_fits
 #import ..EchelleInstruments: read_header
 
-using DataFrames, Query, FITSIO
+using CSV, DataFrames, Query
+using FITSIO
+using Interpolations
 
 #type NEID <: AbstractInstrument end
 """ Trait for 1D Extracted spectra from NEID """

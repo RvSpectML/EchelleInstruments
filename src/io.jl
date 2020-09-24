@@ -5,17 +5,7 @@ Author: Eric Ford
 Created: August 2020
 """
 
-using DataFrames, CSV, FITSIO
-
-"""Read manifest containing filename, bjd, target, and optionally additional metadata from CSV file. """
-function read_manifest(fn::String)
-    df = CSV.read(fn,DataFrame,threaded=false)
-    @assert hasproperty(df,:filename)
-    @assert hasproperty(df,:bjd)
-    @assert hasproperty(df,:target)
-    @assert size(df,1) >= 1
-    return df
-end
+using DataFrames, FITSIO
 
 """ Read header from FITS file and return Dict with contents. """
 function read_header(fn::String; header_idx::Integer = 1)
@@ -27,6 +17,10 @@ function read_header(fn::String; header_idx::Integer = 1)
     metadata = Dict(zip(map(k->Symbol(k),hdr.keys),hdr.values))
 end
 
+""" Read header from FITS file and return Dict with contents. """
+function read_fits_header(fn::String; header_idx::Integer = 1)
+    read_header(fn,header_idx=header_idx)
+end
 
 """ Read metadata in FITS header and return data for keys in fields_str/fields as a Dict. """
 function read_metradata_from_fits

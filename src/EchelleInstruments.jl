@@ -12,10 +12,10 @@ include("common.jl")   # Mostly trait functions to be specialized by instruments
 #function get_inst_module end
 
 include("files.jl")
-export make_manifest
+export make_manifest, read_manifest
 
 include("io.jl")
-export read_manifest, read_metadata_from_fits
+export  read_metadata_from_fits, read_fits_header
 # don't export read_header due to conflict with FITSIO
 
 

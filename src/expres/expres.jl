@@ -10,11 +10,11 @@ Module providing types and traits and customized functions for the EXPRES Spectr
     https://ui.adsabs.harvard.edu/abs/2016SPIE.9908E..6TJ/abstract
 """
 module EXPRES
+using RvSpectMLBase
+import RvSpectMLBase: AbstractInstrument, AbstractInstrument1D, AbstractInstrument2D
 import ..EchelleInstruments: read_manifest, read_metadata_from_fits
 #import ..EchelleInstruments: read_header
 
-using RvSpectMLBase
-import RvSpectMLBase: AbstractInstrument, AbstractInstrument1D, AbstractInstrument2D
 using DataFrames, Query, FITSIO
 using Dates  # If need to use datetime2julian() to get jd.  Need to check about getting BJD.
 
