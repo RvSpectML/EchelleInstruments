@@ -10,7 +10,8 @@ Module providing types and traits and customized functions for the EXPRES Spectr
     https://ui.adsabs.harvard.edu/abs/2016SPIE.9908E..6TJ/abstract
 """
 module EXPRES
-import ..EchelleInstruments: read_manifest, read_header, read_metadata_from_fits
+import ..EchelleInstruments: read_manifest, read_metadata_from_fits
+#import ..EchelleInstruments: read_header
 
 using RvSpectMLBase
 import RvSpectMLBase: AbstractInstrument, AbstractInstrument1D, AbstractInstrument2D
@@ -32,7 +33,7 @@ export default_ccf_mask_v_width
 export get_inst_module
 
 include("io.jl")
-export read_data
+#export read_data
 # export make_manifest
 # read_header not exported to avoid conflict with FITSIO.read_header
 

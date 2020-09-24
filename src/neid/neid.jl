@@ -11,7 +11,8 @@ Module providing types and traits and customized functions for the NEID Spectrog
 module NEID
 using RvSpectMLBase
 import RvSpectMLBase: AbstractInstrument, AbstractInstrument1D, AbstractInstrument2D
-import ..EchelleInstruments: read_manifest, read_header, read_metadata_from_fits
+import ..EchelleInstruments: read_manifest, read_metadata_from_fits
+#import ..EchelleInstruments: read_header
 
 using DataFrames, Query, FITSIO
 
@@ -36,10 +37,10 @@ export default_ccf_mask_v_width
 export get_inst_module
 
 include("io.jl")
-export make_manifest
+#export make_manifest
 # export make_manifest
-export read_metadata, read_data, read_solar_data
+#export read_metadata, read_data, read_solar_data
 # read_header not exported to avoid conflict with FITSIO.read_header
-export read_drift_corrections!, read_barycentric_corrections!
+#export read_drift_corrections!, read_barycentric_corrections!
 
 end

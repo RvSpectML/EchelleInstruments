@@ -214,12 +214,10 @@ function is_in_wavelength_range_list(list::AVT, λ::Real ) where { T<:Real, AVT<
     return idx>length(list) || !(first(list[idx])<=λ<=last(list[idx])) ?  false : true
 end
 
-#=
 function is_in_wavelength_range_list(list::AVT, λ::AA ) where { T1<:Real, AVT<:AbstractVector{Tuple{T1,T1}}, T2<:Real, AA<:AbstractArray{T2} }
     idx =  searchsortedfirst(list, λ, lt=(x,y)->x[2]<y)
     return idx>length(list) || !(first(list[idx])<=λ<=last(list[idx])) ?  false : true
 end
-=#
 
 function is_in_wavelength_range_list(λ::Real; list::DataFrame  )
     @assert hasproperty(list, :lambda_lo)
@@ -233,6 +231,7 @@ function make_ranges_without_tellurics(telluric_list::AVT) where { T<:Real, AVT<
     return chunk_list
 end
 
+#=
 function make_ranges_without_tellurics(telluric_list::AVT; λ_start::Real, λ_stop::Real ) where { T<:Real, AVT<:AbstractVector{Tuple{T,T}} }
     chunk_list = vcat( (λ_start , telluric_list[1] ),
             map(i->( last(telluric_list[i]), first(telluric_list[i+1]) ), 1:(length(telluric_list)-1) ),
@@ -249,10 +248,13 @@ function make_ranges_without_tellurics(telluric_list::AVT; λ_stop::Real ) where
             ( telluric_list[end] , λ_stop) )
 end
 
+=#
+
 function make_ranges_without_tellurics(df::DataFrame)
     DataFrame(:lambda_lo => df[1:(size(df,1)-1), :lambda_hi],  :lambda_hi => df[2:size(df,1), :lambda_lo] )
 end
 
+#=
 function make_ranges_without_tellurics(df::DataFrame; λ_start::Real, λ_stop::Real )
     output = DataFrame(:lambda_lo=>[λ_start],:lambda_hi=>df[1, :lambda_lo])
     append!(output, DataFrame(:lambda_lo => df[1:(size(df,1)-1), :lambda_hi],  :lambda_hi => df[2:size(df,1), :lambda_lo] ) )
@@ -260,7 +262,6 @@ function make_ranges_without_tellurics(df::DataFrame; λ_start::Real, λ_stop::R
     return output
 end
 
-#=
 function make_ranges_without_tellurics(df::DataFrame; λ_start::Real )
     output = DataFrame(:lambda_lo=>[λ_start],:lambda_hi=>df[1, :lambda_lo])
     append!(output, DataFrame(:lambda_lo => df[1:(size(df,1)-1), :lambda_hi],  :lambda_hi => df[2:size(df,1), :lambda_lo] ) )
