@@ -57,6 +57,5 @@ function get_λ_range(data::CLT) where { T1<:Real, T2<:Real, T3<:Real, A1<:Abstr
    return (min=λmin, max=λmax)
 end
 
-
-default_λmin = 4738.0  # Based on HD 101501, should generalize
-default_λmax = 7227.0  #
+default_filter_line_list_λmin = 4738.0  # Based on HD 101501, should generalize
+default_filter_line_list_λmax = 7227.0  #
