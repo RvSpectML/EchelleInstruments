@@ -1,11 +1,8 @@
-using DataFrames, CSV
-
-""" make_manifest(data_path::String, target_subdir::String, Inst::Module; [opts] )
+""" `make_manifest(data_path::String, target_subdir::String, Inst::Module; [opts] )`
 Returns a dataframe containing a list of files to be read and some metadata (e.g., observation times)
 
 # Optional arguements
 - verbose = true
-
 """
 function make_manifest(data_path::String, target_subdir::String, Inst::Module; verbose::Bool = true)
    #=
@@ -43,7 +40,7 @@ function make_manifest(data_path::String, target_subdir::String, Inst::Module; v
    return df_files
 end
 
-"""Read manifest containing filename, bjd, target, and optionally additional metadata from CSV file. """
+"""Read manifest containing `filename`, `bjd`, `target`, and optionally additional metadata from CSV file. """
 function read_manifest(fn::String)
     df = CSV.read(fn,DataFrame,threaded=false)
     @assert hasproperty(df,:filename)
@@ -51,4 +48,13 @@ function read_manifest(fn::String)
     @assert hasproperty(df,:target)
     @assert size(df,1) >= 1
     return df
+end
+
+"""Write manifest containing `filename`, `bjd`, `target`, and optionally additional metadata from CSV file. """
+function write_manifest(fn::String, df)
+    @assert hasproperty(df,:filename)
+    @assert hasproperty(df,:bjd)
+    @assert hasproperty(df,:target)
+    @assert size(df,1) >= 1
+    CSV.write(fn,df)
 end

@@ -4,9 +4,7 @@ CurrentModule = EchelleInstruments
 
 # EchelleInstruments
 
-```@index
-```
-
-```@autodocs
-Modules = [EchelleInstruments]
+```@contents
+Pages = [ "agnostic.md", "expres.md","neid.md"]
+Depth = 2
 ```

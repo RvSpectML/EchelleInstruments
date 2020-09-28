@@ -7,7 +7,11 @@ Created: August 2020
 
 using DataFrames, FITSIO
 
-""" Read header from FITS file and return Dict with contents. """
+""" `read_header( filename )`
+Read header from FITS file and return Dict with contents.
+Optional inputs:
+- hdu: Specifies which HDU to read from the FITS file.  (Default: 1)
+"""
 function read_header(fn::String; header_idx::Integer = 1)
     #println("# Reading: ",fn, " hdu= ",header_idx)
     f = FITS(fn)
@@ -17,12 +21,21 @@ function read_header(fn::String; header_idx::Integer = 1)
     metadata = Dict(zip(map(k->Symbol(k),hdr.keys),hdr.values))
 end
 
-""" Read header from FITS file and return Dict with contents. """
+""" `read_fits_header( filename )`
+Read header from FITS file and return Dict with contents.
+Optional inputs:
+- hdu: Specifies which HDU to read from the FITS file.  (Default: 1)
+"""
 function read_fits_header(fn::String; header_idx::Integer = 1)
     read_header(fn,header_idx=header_idx)
 end
 
-""" Read metadata in FITS header and return data for keys in fields_str/fields as a Dict. """
+""" `read_metradata_from_fits( filename, fields )`
+Read metadata in FITS header for specified keys and return data as a Dict.  `fields` can be an array of symbols or strings.
+Optional inputs:
+- Passing both fields (an array of symbols) and fields_str (an array of strings) as named parameters allows for differences in string used in FITS file and Symbol used in resulting Dict.
+- hdu: Specifies which HDU to read from the FITS file.  (Default: 1)
+"""
 function read_metradata_from_fits
 end
 

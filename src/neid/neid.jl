@@ -18,14 +18,13 @@ using CSV, DataFrames, Query
 using FITSIO
 using Interpolations
 
-#type NEID <: AbstractInstrument end
 """ Trait for 1D Extracted spectra from NEID """
 struct NEID1D <: AbstractInstrument1D end
 
 """ Trait for 2D Extracted spectra from NEID """
 struct NEID2D <: AbstractInstrument2D end
 
-# Trait for any spectra from NEID (could improve by using SimpleTraits)
+""" Trait to specify any 1D or 2D Extracted spectra from NEID """
 const AnyNEID = Union{NEID1D,NEID2D}
 export NEID, NEID1D, NEID2D, AnyNEID
 

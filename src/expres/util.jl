@@ -25,6 +25,9 @@ function filter_line_list(df::DataFrame, inst::IT ; λmin::Real = default_filter
     DataFrame
 end
 
+""" `find_worst_telluric_in_each_chunk( chunk_list_timeseries, spectra )`
+Return an array of the worst (smallest) telluric for each chunk at any time for the provided ChunkListTimeseries.
+"""
 function find_worst_telluric_in_each_chunk( clt::AbstractChunkListTimeseries, data::AbstractArray{AS,1} )  where { T1<:Real, T2<:Real, T3<:Real, A1<:AbstractArray{T1,2}, A2<:AbstractArray{T2,2}, A3<:AbstractArray{T3,2}, IT<:AnyEXPRES, AS<:Spectra2DBasic{T1,T2,T3,A1,A2,A3,IT}  }
    num_lines = num_chunks(clt)
    num_obs = length(clt)
@@ -44,14 +47,14 @@ end
 
 
 """
-   make_clean_line_list_from_tellurics_expres(line_list, expres_data; Δv_to_avoid_tellurics )
+   `make_clean_line_list_from_tellurics_expres(line_list, expres_data; Δv_to_avoid_tellurics )`
 Returns a new line list that excludes lines with telluric contamination.
 Inputs:
-- line_list:  Dataframe containing field lambda
-- expres_data:  Array of spectra
-- Δv_to_avoid_tellurics:  in m/s
+- `line_list`:  Dataframe containing field lambda
+- `expres_data`:  Array of spectra
+- `Δv_to_avoid_tellurics`:  in m/s
 Outputs:
-- line_list_without_tellurics:   DataFrame with fields, lambda, weight, lambda_lo, and lambda_hi.
+- `line_list_without_tellurics`:   DataFrame with fields: `lambda`, `weight`, `lambda_lo`, and `lambda_hi`.
 Warning: Currently, assumes a tellurics value in metadata for each spectra, such as is provided by EXPRES.
 """
 function make_clean_line_list_from_tellurics_expres(line_list::DataFrame, expres_data::DT; Δv_to_avoid_tellurics::Real = default_Δv_to_avoid_tellurics,

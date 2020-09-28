@@ -13,6 +13,11 @@ makedocs(;
     ),
     pages=[
         "Home" => "index.md",
+        "Instrument agnostic" => "agnostic.md",
+        "Instruments" => [
+            "NEID" => "neid.md",
+            "EXPRES" => "expres.md"],
+        "Index" => "longlist.md",
     ],
 )
 

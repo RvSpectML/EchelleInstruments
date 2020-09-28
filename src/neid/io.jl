@@ -5,8 +5,6 @@ Author: Eric Ford and collaborators
 Created: August 2020
 """
 
-
-
 """Create Dataframe containing filenames and key data for all files neid*.fits in directory"""
 function make_manifest(data_path::String ; max_spectra_to_use::Int = 1000 )
     dir_filelist = readdir(data_path,join=true)

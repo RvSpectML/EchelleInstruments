@@ -23,6 +23,7 @@ function make_manifest(data_path::String)
     df_files
 end
 
+"Return modified Julian date based on input Julian date"
 function jd2mjd(jd::Real)
     @assert jd > 2400000.5  # There's no EPRV data from that long ago!
     mjd = jd - 2400000.5
@@ -30,7 +31,7 @@ function jd2mjd(jd::Real)
 end
 
 
-"""Create Dict containing filename and default metadata from file."""
+"""Create Dict containing filename and default metadata from FITS file headers."""
 function read_metadata(fn::String)
     dict1 = read_metadata_from_fits(fn,hdu=1,fields=metadata_symbols_default(EXPRES2D()),fields_str=metadata_strings_default(EXPRES2D()))
     global have_issued_expres_bjd_warning
@@ -45,6 +46,8 @@ function read_metadata(fn::String)
     return dict
 end
 
+""" `add_metadata_from_fits!(df, filename)`
+Return updated dataframe after adding metadata from FITS file header."""
 function add_metadata_from_fits!(df::DataFrame, fn::String)
     metadata_keep = read_metadata(fn)
     push!(df, metadata_keep)
@@ -93,6 +96,7 @@ function read_data(dfr::DataFrameRow{DataFrame,DataFrames.Index})
     read_data(fn,metadata)
 end
 
+""" Read only EXPRES data from FITS file, and leave metadata empty."""
 function read_data_only(fn::String)
     f = FITS(fn)
     metadata = Dict{Symbol,Any}()
