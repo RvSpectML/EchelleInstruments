@@ -37,7 +37,7 @@ function metadata_strings_default end
 "Returns the maximum range of wavelengths (in solar system barycenter frame) to be used for given spectrum"
 function get_λ_range end
 
-"" `filter_line_list( df, inst )`
+"""" `filter_line_list`( df, inst )
 Returns a dataframe filtered to only include lines appropriate for the specified instrument.
 Inputs:
 - df: Dataframe containing a column with key `:lambda` for wavelengths to be considered.
