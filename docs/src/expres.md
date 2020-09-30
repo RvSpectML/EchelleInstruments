@@ -17,7 +17,7 @@ Depth = 2
 ```@autodocs
 Modules = [EXPRES ]
 Private = false
-Order = [:type]
+Order = [:type, :constant]
 ```
 
 ## Functions

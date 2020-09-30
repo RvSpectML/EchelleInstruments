@@ -19,6 +19,8 @@ include("io.jl")
 export  read_metadata_from_fits, read_fits_header
 # don't export read_header due to conflict with FITSIO
 
+include("util.jl")
+# TODO: Decide what to export from util.jl
 
 include("expres/expres.jl")
 import .EXPRES: EXPRES1D, EXPRES2D, AnyEXPRES #, get_inst_module

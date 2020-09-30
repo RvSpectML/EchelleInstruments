@@ -1,5 +1,12 @@
-""" Decleares generic functions on spectra that are to be overloaded for each instrument."""
+default_Δv_to_avoid_tellurics = 29785.8905  # 2pi AU/year in m/s
 
+#import RvSpectMLBase: make_clean_line_list_from_tellurics
+#export filter_line_list
+#export make_clean_line_list_from_tellurics
+""" For generic functions on spectra that are to be overloaded for each instrument, see [RvSpectMLBase](https://rvspectml.github.io/RvSpectMLBase.jl/stable/)'s [src/instrumenets/common.jl](https://github.com/RvSpectML/RvSpectMLBase.jl/blob/main/src/instruments/common.jl)."""
+
+#=
+# This is now in RvSpectmLBase
 # Declare functions that should be specialized for each instrument here, so they can be imported into their instrument's module.
 "Returns minimum allowable order for the specified instrument"
 function min_order end
@@ -74,3 +81,5 @@ max_pixels_in_spectra(inst::AbstractInstrument2D) = (max_order(inst)-min_order(i
 
 " Returns maximum number of pixels in a chunk from the specified instrument"
 min_pixels_in_chunk(inst::AbstractInstrument) = 6
+
+=#
