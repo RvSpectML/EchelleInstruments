@@ -119,3 +119,9 @@ function read_differential_extinctions!(fn::String, df::DataFrame, df_time_col::
     df[!,:diff_ext_rv] = -diff_ext(df[!,df_time_col])/100 # cm/s -> m/s
     return df
 end
+
+""" Read normalization function for approximate solar continuum+blaze correction
+TODO: Figure out mapping between these orders and what's stored in the FITS file before using. """
+function read_solar_normalization(fn::String = joinpath(pkgdir(EchelleInstruments),"data","neid","NEID_normalization_function.csv") )
+    CSV.read(fn, DataFrame)
+end
