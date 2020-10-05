@@ -26,7 +26,10 @@ end
 
 """Create Dict containing filename and default metadata from file."""
 function read_metadata(fn::String)
-    dict = read_metadata_from_fits(fn,fields=metadata_symbols_default(NEID2D()),fields_str=metadata_strings_default(NEID2D()))
+    fields_to_save = metadata_symbols_default(NEID2D())
+    fields_str_to_save = metadata_strings_default(NEID2D())
+    dict = read_metadata_from_fits(fn,fields=fields_to_save,fields_str=fields_str_to_save)
+    check_metadata_fields_expected_present(dict,fields_to_save)
     dict[:Filename] = fn
     return dict
 end

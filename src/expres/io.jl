@@ -6,8 +6,6 @@ Author: Eric Ford
 Created: August 2020
 """
 
-have_issued_expres_bjd_warning = false
-
 """Create Dataframe containing filenames and key data for all files neid*.fits in directory"""
 function make_manifest(data_path::String)
     dir_filelist = readdir(data_path,join=true)
@@ -30,19 +28,16 @@ function jd2mjd(jd::Real)
     return mjd
 end
 
-
 """Create Dict containing filename and default metadata from FITS file headers."""
 function read_metadata(fn::String)
-    dict1 = read_metadata_from_fits(fn,hdu=1,fields=metadata_symbols_default(EXPRES2D()),fields_str=metadata_strings_default(EXPRES2D()))
-    global have_issued_expres_bjd_warning
-    if !have_issued_expres_bjd_warning
-        @warn "Currently, bjd field contains modified julian date of geometric midpoint of exposure for EXPRES observations, and is NOT corrected to be at solar system barycenter."
-        have_issued_expres_bjd_warning = true
-    end
-    dict1[:bjd] = jd2mjd(datetime2julian(DateTime(dict1[:midpoint])))
+    fields_to_save = metadata_symbols_default(EXPRES2D())
+    fields_str_to_save = metadata_strings_default(EXPRES2D())
+    dict1 = read_metadata_from_fits(fn,hdu=1,fields=fields_to_save,fields_str=fields_str_to_save)
     dict1[:Filename] = fn
-    dict2 = read_metadata_from_fits(fn,hdu=2,fields=metadata_hdu2_symbols_default(EXPRES2D()),fields_str=metadata_hdu2_strings_default(EXPRES2D()))
-    dict = merge(dict1,dict2)
+    dict2 = read_metadata_from_fits(fn,hdu=2,fields=fields_to_save,fields_str=fields_str_to_save)
+    dict3 = read_metadata_from_fits(fn,hdu=3,fields=fields_to_save,fields_str=fields_str_to_save)
+    dict = merge(dict1,dict2,dict3)
+    check_metadata_fields_expected_present(dict,fields_to_save)
     return dict
 end
 

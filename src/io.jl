@@ -54,14 +54,30 @@ function read_metadata_from_fits(fn::String; fields::Array{Symbol,1}, fields_str
     @assert 1 <= hdu <= 3
     f = FITS(fn)
     hdr = FITSIO.read_header(f[hdu])
-    # Check that header has all expected fields
-    #println(fn)
-    for field in fields_str
+    #values = Vector{Any}(undef,length(fields))
+    values_mask = falses(length(fields))
+    for (i,field) in enumerate(fields_str)
         #println("  ",field,": ",typeof(hdr[field]))
-        @assert findfirst(isequal(field),keys(hdr)) != nothing
+        #@assert findfirst(isequal(field),keys(hdr)) != nothing
+        idx = findfirst(isequal(field),keys(hdr))
+        if idx != nothing
+            #values[i] = hdr[fields_str[idx]]
+            values_mask[i] = true
+        end
     end
-    values = map(s->hdr[s],fields_str)
+    values = map(s->hdr[s],fields_str[values_mask])
 
-    df = Dict{Symbol,Any}(zip(fields,values))
+    df = Dict{Symbol,Any}(zip(fields[values_mask],values))
     return df
+end
+
+function check_metadata_fields_expected_present(df::Dict,  fields::Array{Symbol,1} ) #, fields_str::AbstractArray{AS,1} )  where { AS<:AbstractString }
+    # Check that header has all expected fields
+    for field in fields
+        if !haskey(df, field)
+            println("# metadata lack entry:  ",field)
+            return false
+        end
+    end
+    return true
 end
