@@ -62,69 +62,8 @@ end
 Return DataFrame with the compliment of wavelength ranges in input DataFrame.
 Optionally, specify that output ranges should start/stop beyond wavelength range of input DataFrame.
 """
-function make_ranges_without_tellurics(telluric_list::DataFrame; min_Δv::Real = 60000, λ_start::Real = telluric_list[1,:lambda_lo], λ_stop::Real=telluric_list[end,:lambda_hi] )
+function make_ranges_without_tellurics(telluric_list::DataFrame; min_Δv::Real = 2*RvSpectMLBase.max_bc, λ_start::Real = telluric_list[1,:lambda_lo], λ_stop::Real=telluric_list[end,:lambda_hi] )
     df_full = calc_complement_wavelength_ranges(telluric_list,λ_start=λ_start,λ_stop=λ_stop)
     df_large_chunks = df_full |> @filter((_.lambda_hi-_.lambda_lo)*2/(_.lambda_hi+_.lambda_lo) >= min_Δv/RvSpectMLBase.speed_of_light_mps) |> DataFrame
     return df_large_chunks
-end
-
-""" `is_in_wavelength_range_list(λ; list )`
-Return true if λ is between lambda_lo and lambda_hi for any row in list
-"""
-function is_in_wavelength_range_list(λ::Real; list::DataFrame  )
-    @assert hasproperty(list, :lambda_lo)
-    @assert hasproperty(list, :lambda_hi)
-    idx =  searchsortedfirst(list[:,:lambda_hi], λ)
-    return idx>size(list,1) || !(list[idx,:lambda_lo]<=λ<=list[idx,:lambda_hi]) ?  false : true
-end
-
-
-""" `is_in_wavelength_range_list(λ_lo, λ_hi; list )`
-Return true if there is overlap between (λ_lo, λ_hi) and lambda_lo and lambda_hi for any row in list
-# TODO: test
-"""
-function is_in_wavelength_range_list(λ_lo::Real, λ_hi::Real; list::DataFrame  )
-    @assert λ_lo < λ_hi
-    @assert hasproperty(list, :lambda_lo)
-    @assert hasproperty(list, :lambda_hi)
-    idx =  searchsortedfirst(list[:,:lambda_hi], λ_lo)
-    if idx>size(list,1)    return false  end
-    if λ_lo<=list[idx,:lambda_hi] &&  λ_hi>=list[idx,:lambda_lo]
-        return true
-    else
-        return false
-    end
-end
-
-""" `break_chunk_into_chunks_without_tellurics( chunk, df_telluric_ranges )`
-WIP
-"""
-function break_chunk_into_chunks_without_tellurics(chunk::AbstractChunkOfSpectrum, tellurics::DataFrame; min_chunk_length::Integer = 6)
-    telluric_mask = is_in_wavelength_range_list.(chunk.λ, list=tellurics)
-    new_chunks = Vector{typeof(chunk)}(undef,0)
-    idx_start = findfirst(.!telluric_mask)
-    idx_stop = findlast(.!telluric_mask)
-    if isnothing(idx_start) || isnothing(idx_stop)
-        return new_chunks
-    end
-    idx_lo = idx_start
-    idx_hi = idx_start
-    while idx_hi < idx_stop
-        idx_lo = findfirst( view(telluric_mask,idx_hi:idx_stop) )
-        if isnothing(idx_lo)
-            break
-        end
-        idx_lo += idx_lo-1
-        idx_hi = findfirst( view(telluric_mask,idx_lo:idx_stop) )
-        if isnothing(idx_hi)
-            idx_hi = idx_stop
-        else
-            idx_hi += idx_lo-2
-        end
-        if idx_hi-idx_lo > min_chunk_length # TODO Make min_chunk_length
-            @warn "Not implemented yet"
-            push!(new_chunks,ChunkOfSpectrum())
-        end
-    end
-    return new_chunks
 end
