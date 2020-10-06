@@ -42,6 +42,19 @@ function make_clean_line_list_from_tellurics(line_list::DataFrame, neid_data::DT
    telluric_ranges.lambda_hi .*= calc_doppler_factor(v_center_to_avoid_tellurics) * calc_doppler_factor(Δv_to_avoid_tellurics)
 
    line_list |> # @filter(λmin <= _.lambda <= λmax) |>
-      @filter( !EchelleInstruments.is_in_wavelength_range_list(_.lambda, list=telluric_ranges ) ) |>
+      @filter( !RvSpectMLBase.is_in_wavelength_range_list(_.lambda, list=telluric_ranges ) ) |>
       DataFrame
+end
+
+
+function choose_obs_idx_for_init_guess(df::DataFrame, inst::IT )  where { IT<:NEID.AnyNEID }
+   @assert size(df,1) >= 1
+   return 1
+   # TODO: Replace with something that estimates signal to noise
+   #=
+   @assert hasproperty(df,:snr_prelim)
+   idx = findmax(df.snr_prelim)[2]
+   @assert 1 <= idx <= size(df,1)
+   return idx
+   =#
 end

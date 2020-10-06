@@ -63,12 +63,13 @@ Warning: Currently, assumes a tellurics value in metadata for each spectra, such
 function make_clean_line_list_from_tellurics(line_list::DataFrame, expres_data::DT; Δv_to_avoid_tellurics::Real = default_Δv_to_avoid_tellurics,
             v_center_to_avoid_tellurics::Real = 0.0
                ) where { T1<:Real, A1<:AbstractArray{T1}, T2<:Real, A2<:AbstractArray{T2}, T3<:Real, A3<:AbstractArray{T3}, IT<:EXPRES.AnyEXPRES, ST<:Spectra2DBasic{T1,T2,T3,A1,A2,A3,IT}, DT<:AbstractArray{ST,1} }
-   @assert 100 <= Δv_to_avoid_tellurics <= 50000
+
+   @assert 0.5*RvSpectMLBase.max_bc_earth_rotation <= Δv_to_avoid_tellurics <= 2*RvSpectMLBase.max_bc
    line_list_to_search_for_tellurics = copy(line_list)
    # TODO: Check sign convention for v_center_to_avoid_tellurics
    line_list_to_search_for_tellurics.lambda_lo = line_list_to_search_for_tellurics.lambda./calc_doppler_factor(Δv_to_avoid_tellurics).*calc_doppler_factor(v_center_to_avoid_tellurics)
    line_list_to_search_for_tellurics.lambda_hi = line_list_to_search_for_tellurics.lambda.*calc_doppler_factor(Δv_to_avoid_tellurics).*calc_doppler_factor(v_center_to_avoid_tellurics)
-   chunk_list_timeseries = make_chunk_list_timeseries(expres_data,line_list_to_search_for_tellurics)
+   chunk_list_timeseries = RvSpectMLBase.make_chunk_list_timeseries_around_lines(expres_data,line_list_to_search_for_tellurics)
    line_list_to_search_for_tellurics.min_telluric_model_all_obs = find_worst_telluric_in_each_chunk( chunk_list_timeseries, expres_data)
    line_list_no_tellurics_df = line_list_to_search_for_tellurics |> @filter(_.min_telluric_model_all_obs == 1.0) |> DataFrame
 end
@@ -146,4 +147,12 @@ function find_ranges_with_tellurics(spectrum::ST; min_order::Integer = 1, max_or
     sort!(list_of_ranges, :lambda_lo )
     non_overlapping_ranges = merge_sorted_wavelength_ranges(list_of_ranges,min_Δv_clean=min_Δv_clean)
     return non_overlapping_ranges
+end
+
+function choose_obs_idx_for_init_guess(df::DataFrame, inst::IT ) where { IT<:EXPRES.AnyEXPRES }
+   @assert size(df,1) >= 1
+   @assert hasproperty(df,:snr_prelim)
+   idx = findmax(df.snr_prelim)[2]
+   @assert 1 <= idx <= size(df,1)
+   return idx
 end

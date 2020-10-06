@@ -45,10 +45,11 @@ include("io.jl")
 #import RvSpectMLBase: continuum_normalize_spectrum, continuum_normalize_spectra  # Not yet implemented
 #import RvSpectMLBase: filter_line_list
 #import RvSpectMLBase: find_worst_telluric_in_each_chunk # Not yet implemented
-import RvSpectMLBase: make_clean_line_list_from_tellurics
+import RvSpectMLBase: make_clean_line_list_from_tellurics, choose_obs_idx_for_init_guess
 include("util.jl") # TODO
 #export continuum_normalize_spectrum!, continuum_normalize_spectra! # Not yet implemented
 export filter_line_list
 export make_clean_line_list_from_tellurics
+#export choose_obs_idx_for_init_guess
 
 end
