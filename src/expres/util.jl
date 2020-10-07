@@ -1,4 +1,20 @@
 
+""" Normalize spectrum based on blaze model (also tryies to include black body function) from FITS file. """
+function blaze_normalize_spectrum!(spectrum::ST) where { ST<:AbstractSpectra }
+    @assert haskey(spectrum.metadata,:continuum)
+    spectrum.flux ./= spectrum.metadata[:blaze]
+    spectrum.var ./= (spectrum.metadata[:blaze] ) .^2
+    return spectrum
+end
+
+""" Normalize each spectrum based on blaze model (also tryies to include black body function) from FITS files. """
+function blaze_normalize_spectra!(spectra::AS) where { ST<:AbstractSpectra, AS<:AbstractArray{ST} }
+    for spectrum in spectra
+        blaze_normalize_spectrum!(spectrum)
+    end
+    return spectra
+end
+
 """ Normalize spectrum based on continuum model from FITS file. """
 function continuum_normalize_spectrum!(spectrum::ST) where { ST<:AbstractSpectra }
     @assert haskey(spectrum.metadata,:continuum)
