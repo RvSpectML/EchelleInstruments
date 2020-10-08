@@ -5,6 +5,7 @@ CurrentModule = EchelleInstruments
 # Instrument-agnostic interface
 
 ```@contents
+Modules = [EchelleInstruments, NEID, EXPRES ]
 Pages = ["agnostic.md"]
 Depth = 2
 ```

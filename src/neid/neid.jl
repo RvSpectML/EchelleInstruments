@@ -1,12 +1,13 @@
 """
-   Delegates loading functions & traits for the NEID spectrograph
-   https://neid.psu.edu/
+Delegates loading functions & traits for the NEID spectrograph
+
 Author: Eric Ford and collaborators
 Created: August 2020
 """
 
 """
 Module providing types and traits and customized functions for the NEID Spectrograph.
+- [NEID blog](https://neid.psu.edu/)
 """
 module NEID
 using RvSpectMLBase
