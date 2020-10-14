@@ -1,3 +1,29 @@
+function calc_mean_Δv(λ::AbstractVector{T1}, λ_min::Real, λ_max::Real ) where { T1<:Real }
+    idx_min = searchsortedfirst(λ,λ_min)
+    idx_max = searchsortedlast(λ,λ_max)
+    @assert 1 <= idx_min <= length(λ)
+    @assert 1 <= idx_max <= length(λ)
+    Δv = log(λ[idx_max]/λ[idx_min])/(idx_max-idx_min) * RvSpectMLBase.speed_of_light_mps
+end
+
+function get_shared_wavelength_range_for_order(spectra::AbstractVector{AS}, order::Integer; pixels_to_use::AR = min_col_default(get_inst(spectra),order):max_col_default(get_inst(spectra),order),
+             boost_factor::AA1 = ones(size(spectra,1)) ) where {
+             AS<:AbstractSpectra2D, AR<:AbstractRange{Int64}, T1<:Real, AA1<:AbstractVector{T1} }
+        num_obs = length(spectra)
+        @assert 1 <= num_obs <= max_num_spectra
+        λ_min = maximum(minimum(spectra[t].λ[pixels_to_use,order])/boost_factor[t] for t in 1:num_obs)
+        λ_max = minimum(maximum(spectra[t].λ[pixels_to_use,order])/boost_factor[t] for t in 1:num_obs)
+        mean_Δv = sum(map(t->calc_mean_Δv(view(spectra[t].λ, pixels_to_use, order), λ_min, λ_max),1:num_obs)) / num_obs
+        return (λ_min=λ_min, λ_max=λ_max, mean_Δv=mean_Δv)
+        #=
+        @assert spacing == :Log || spacing == :Linear
+        if spacing == :Log
+            @warn "There's some issues with end points exceeding the bounds.  Round off error?  May cause bounds errors."
+        end
+        =#
+end
+
+
 """ `find_ranges_with_tellurics( spectra )`
 Return Dataframe of non-overlapping, sorted wavelength ranges that were marked as having tellurics in any of provided spectra.
 Calls instrument-specific `find_ranges_with_tellurics` on each spectrum.
@@ -42,9 +68,15 @@ function merge_sorted_wavelength_ranges(df::DataFrame; min_Δv_clean::Real = def
     return non_overlapping_ranges
 end
 
-""" `calc_complement_wavelength_ranges( df ; lambda_start, lambda_stop )`
+""" `calc_complement_wavelength_ranges( df_in ; lambda_start, lambda_stop )`
 Return DataFrame with the compliment of wavelength ranges in input DataFrame.
-Optionally, specify that output ranges should start/stop beyond wavelength range of input DataFrame.
+Inputs:
+- `df_in`: DataFrame containing `lambda_lo` and `lambda_hi`
+Optional Inputs:
+- `λ_start`:   Output range should start at `λ_start` rather than first entry in df
+- `λ_stop`:   Output range should end at `λ_stop` rather than first entry in df
+Returns:
+- `df_out`: DataFrame containing `lambda_lo` and `lambda_hi`
 """
 function calc_complement_wavelength_ranges(df_in::DataFrame; λ_start::Real = df_in[1,:lambda_lo], λ_stop::Real=df_in[end,:lambda_hi] )
     @assert hasproperty(df_in,:lambda_lo)
@@ -58,12 +90,43 @@ function calc_complement_wavelength_ranges(df_in::DataFrame; λ_start::Real = df
     df_out
 end
 
-""" `calc_complement_wavelength_ranges( df ; lambda_start, lambda_stop )`
+#global already_printed_stuff = 0
+
+""" `make_ranges_without_tellurics( telluric_list ; lambda_start, lambda_stop, min_Δv, max_Δv )`
 Return DataFrame with the compliment of wavelength ranges in input DataFrame.
-Optionally, specify that output ranges should start/stop beyond wavelength range of input DataFrame.
+Inputs:
+- `telluric_list`: DataFrame containing `lambda_lo` and `lambda_hi` for each wavelength range to be excluded due to tellurics
+Optional Inputs:
+- `min_Δv`:  Don't include chunks that are smaller than `min_Δv` (2*max barycentric correction)
+- `max_Δv`:  Split up any chunks larger than `max_Δv` (Inf)
+- `λ_start`:   Output range should start at `λ_start` rather than first entry in telluric_list
+- `λ_stop`:   Output range should end at `λ_stop` rather than first entry in telluric_list
 """
-function make_ranges_without_tellurics(telluric_list::DataFrame; min_Δv::Real = 2*RvSpectMLBase.max_bc, λ_start::Real = telluric_list[1,:lambda_lo], λ_stop::Real=telluric_list[end,:lambda_hi] )
+function make_ranges_without_tellurics(telluric_list::DataFrame; min_Δv::Real = 2*RvSpectMLBase.max_bc, max_Δv::Real =Inf, λ_start::Real = telluric_list[1,:lambda_lo], λ_stop::Real=telluric_list[end,:lambda_hi] )
+    @assert issorted(telluric_list.lambda_lo)
+    c = RvSpectMLBase.speed_of_light_mps
     df_full = calc_complement_wavelength_ranges(telluric_list,λ_start=λ_start,λ_stop=λ_stop)
-    df_large_chunks = df_full |> @filter((_.lambda_hi-_.lambda_lo)*2/(_.lambda_hi+_.lambda_lo) >= min_Δv/RvSpectMLBase.speed_of_light_mps) |> DataFrame
-    return df_large_chunks
+    df_large_chunks = df_full |> @filter((_.lambda_hi-_.lambda_lo)*2/(_.lambda_hi+_.lambda_lo) >= min_Δv/c) |> DataFrame
+    df_nice_sized_chunks =  df_large_chunks |> @filter((_.lambda_hi-_.lambda_lo)*2/(_.lambda_hi+_.lambda_lo) <= max_Δv/c) |> DataFrame
+    if max_Δv < Inf
+        df_too_large_chunks = df_large_chunks |> @filter((_.lambda_hi-_.lambda_lo)*2/(_.lambda_hi+_.lambda_lo) > max_Δv/c) |> DataFrame
+        for row in eachrow(df_too_large_chunks)
+            #global already_printed_stuff
+            #if already_printed_stuff > 100   continue   end
+            #  TODO: Pay attention to where spectrum has natural breaks (order boundaries, no lines, etc.)
+            Δv_to_be_divided = (row.lambda_hi-row.lambda_lo)*2/(row.lambda_hi+row.lambda_lo) * c
+            println("# row: λ= ", row.lambda_lo, " - ", row.lambda_hi, " Δv_to_be_divided= ",Δv_to_be_divided)
+            Δv_to_be_divided = log(row.lambda_hi/row.lambda_lo)  * c
+            num_chunks = ceil(Int, Δv_to_be_divided/max_Δv )
+            Δv_new_chunks = Δv_to_be_divided/num_chunks
+            println("# Δv_to_be_divided = ", Δv_to_be_divided, " num_chunks = ", num_chunks, " Δv_new_chunks= ",Δv_new_chunks)
+            new_λ_lo = exp.(log(row.lambda_lo) .+ Δv_new_chunks./c .* (0:(num_chunks-1)))
+            new_λ_hi = exp.(log(row.lambda_lo) .+ Δv_new_chunks./c .* (1:num_chunks))
+            append!(df_nice_sized_chunks,Dict( :lambda_lo=>new_λ_lo, :lambda_hi=>new_λ_hi ) )
+            #already_printed_stuff += 1
+        end
+        sort!(df_nice_sized_chunks, :lambda_lo )
+    end
+    return df_nice_sized_chunks
+    #return df_large_chunks
 end

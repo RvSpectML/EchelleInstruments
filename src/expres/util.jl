@@ -97,7 +97,7 @@ function find_ranges_with_tellurics_in_order(spectrum::ST, order::Integer; tellu
     @assert haskey(spectrum.metadata,:tellurics)
     telluric_ranges = Vector{Tuple{Int64,Int64}}(undef,0)
 
-    c_mps = 3e8
+    c = RvSpectMLBase.speed_of_light_mps
     all_wavelengths = range(first(spectrum.λ[:,order]),stop=last(spectrum.λ[:,order]),length=size(spectrum.λ,1) )
     tellurics = spectrum.metadata[:tellurics]
     start = findfirst(x->!isnan(x),view(tellurics,:,order) )
@@ -125,7 +125,7 @@ function find_ranges_with_tellurics_in_order(spectrum::ST, order::Integer; tellu
                 if length(telluric_ranges) >= 1
                     idx_last_start = last(telluric_ranges)[1]
                     idx_last_stop = last(telluric_ranges)[2]
-                    if spectrum.λ[idx_start_this_telluric,order] - spectrum.λ[idx_last_stop,order] <= min_Δv_clean/c_mps * spectrum.λ[idx_start_this_telluric,order]
+                    if spectrum.λ[idx_start_this_telluric,order] - spectrum.λ[idx_last_stop,order] <= min_Δv_clean/c * spectrum.λ[idx_start_this_telluric,order]
                         idx_start_this_telluric = first(last(telluric_ranges))
                         pop!(telluric_ranges)
                     end
@@ -148,7 +148,7 @@ import EchelleInstruments.merge_sorted_wavelength_ranges
 function find_ranges_with_tellurics(spectrum::ST; min_order::Integer = 1, max_order::Integer = size(spectrum.λ,2), min_Δv_clean::Real = default_min_Δv_clean, telluric_threshold::Real = 1 ) where {
             T1<:Real, A1<:AbstractArray{T1}, T2<:Real, A2<:AbstractArray{T2}, T3<:Real, A3<:AbstractArray{T3}, IT<:EXPRES.AnyEXPRES, ST<:Spectra2DBasic{T1,T2,T3,A1,A2,A3,IT}  }
     @assert haskey(spectrum.metadata,:tellurics)
-    c_mps = RvSpectMLBase.speed_of_light_mps
+    c = RvSpectMLBase.speed_of_light_mps
 
     #list_of_ranges = Vector{Tuple{eltype(spectrum.λ),eltype(spectrum.λ)}}(undef,0)
     list_of_ranges = DataFrame()
@@ -164,6 +164,8 @@ function find_ranges_with_tellurics(spectrum::ST; min_order::Integer = 1, max_or
     non_overlapping_ranges = merge_sorted_wavelength_ranges(list_of_ranges,min_Δv_clean=min_Δv_clean)
     return non_overlapping_ranges
 end
+
+#import EchelleInstruments.choose_obs_idx_for_init_guess
 
 function choose_obs_idx_for_init_guess(df::DataFrame, inst::IT ) where { IT<:EXPRES.AnyEXPRES }
    @assert size(df,1) >= 1

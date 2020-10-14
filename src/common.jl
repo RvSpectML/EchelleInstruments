@@ -1,4 +1,6 @@
-default_Δv_to_avoid_tellurics = 29785.8905  # 2pi AU/year in m/s
+default_Δv_to_avoid_tellurics = RvSpectMLBase.max_bc # 29785.8905  # ~ 2pi AU/year in m/s
+
+max_num_spectra = 10000  # arbitrary limit
 
 #import RvSpectMLBase: make_clean_line_list_from_tellurics
 #export filter_line_list
