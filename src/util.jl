@@ -6,23 +6,6 @@ function calc_mean_Δv(λ::AbstractVector{T1}, λ_min::Real, λ_max::Real ) wher
     Δv = log(λ[idx_max]/λ[idx_min])/(idx_max-idx_min) * RvSpectMLBase.speed_of_light_mps
 end
 
-function get_shared_wavelength_range_for_order(spectra::AbstractVector{AS}, order::Integer; pixels_to_use::AR = min_col_default(get_inst(spectra),order):max_col_default(get_inst(spectra),order),
-             boost_factor::AA1 = ones(size(spectra,1)) ) where {
-             AS<:AbstractSpectra2D, AR<:AbstractRange{Int64}, T1<:Real, AA1<:AbstractVector{T1} }
-        num_obs = length(spectra)
-        @assert 1 <= num_obs <= max_num_spectra
-        λ_min = maximum(minimum(spectra[t].λ[pixels_to_use,order])/boost_factor[t] for t in 1:num_obs)
-        λ_max = minimum(maximum(spectra[t].λ[pixels_to_use,order])/boost_factor[t] for t in 1:num_obs)
-        mean_Δv = sum(map(t->calc_mean_Δv(view(spectra[t].λ, pixels_to_use, order), λ_min, λ_max),1:num_obs)) / num_obs
-        return (λ_min=λ_min, λ_max=λ_max, mean_Δv=mean_Δv)
-        #=
-        @assert spacing == :Log || spacing == :Linear
-        if spacing == :Log
-            @warn "There's some issues with end points exceeding the bounds.  Round off error?  May cause bounds errors."
-        end
-        =#
-end
-
 
 """ `find_ranges_with_tellurics( spectra )`
 Return Dataframe of non-overlapping, sorted wavelength ranges that were marked as having tellurics in any of provided spectra.
