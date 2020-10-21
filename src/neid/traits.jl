@@ -24,6 +24,13 @@ min_col_default(::NEID2D, ord::Integer) = 451              # Avoiding smaller co
 #min_col_default(::NEID2D) = 2000              # Avoiding smaller columns due to lower flux and distortions
 max_col_default(::NEID2D, ord::Integer) = 9216 - (min_col_default(NEID2D(),ord)-1)   # Avoiding larger columns for symmetry
 
+import RvSpectMLBase: get_pixel_range
+function get_pixel_range(inst::NEID2D, ord::Integer)
+    minc = max(min_col_default(inst, ord)) #, min_col_excalibur(inst,order), min_col_nonnan(inst,order))
+    maxc = min(max_col_default(inst, ord)) #, max_col_excalibur(inst,order), max_col_nonnan(inst,order))
+    return minc:maxc
+end
+
 import RvSpectMLBase: metadata_symbols_default, metadata_strings_default
 metadata_symbols_default(::AnyNEID) = Symbol[:bjd, :target, :ssbz]
 metadata_strings_default(::AnyNEID) = String["OBSJD", "SKY-OBJ", "SSBZ000"]

@@ -24,14 +24,28 @@ const minmax_col_excalibur_avail = vcat(fill(1:1,31),
     [ 2658:5073, 1962:5830, 1650:6030, 1550:6364, 1322:6405, 1156:6476, 1063:6848, 843:6927, 779:7053, 672:7136, 469:7172, 487:7177, 399:7148, 331:7203, 337:7191, 257:7196, 264:7201, 226:7207, 221:7212, 228:7218, 189:7206, 184:7212, 168:7200, 163:7206, 158:7212, 153:7200, 148:7206, 143:7194, 150:7200, 145:7207, 140:7194, 135:7201, 130:7188, 138:7195, 133:7182, 128:7189, 123:7176, 132:7183, 127:7170, 122:7177, 131:7164, 126:7150, 121:7113, 145:7098, 155:5401 ],
     fill(1:1, max_order(EXPRES2D())-77+1) )
 
-min_col_excalibur(::EXPRES2D, ord::Integer) = first(minmax_col_excalibur_avail[ord])
-max_col_excalibur(::EXPRES2D, ord::Integer) = last(minmax_col_excalibur_avail[ord])
+min_col_excalibur(inst::EXPRES2D, ord::Integer) = first(minmax_col_excalibur_avail[ord])
+max_col_excalibur(inst::EXPRES2D, ord::Integer) = last(minmax_col_excalibur_avail[ord])
 
 import RvSpectMLBase: orders_to_use_default, min_col_default, max_col_default
 
 orders_to_use_default(::EXPRES2D) = 43:75    # Based on methods for inital RV described at http://exoplanets.astro.yale.edu/science/activity.php
-min_col_default(inst::EXPRES2D, ord::Integer) = 770
-max_col_default(inst::EXPRES2D, ord::Integer) = 6650
+min_col_default(::EXPRES2D, ord::Integer) = 770
+max_col_default(::EXPRES2D, ord::Integer) = 6650
+
+
+import RvSpectMLBase: get_pixel_range
+function get_pixel_range(inst::EXPRES2D, ord::Integer)
+    min_pixels_to_use_in_order = 60
+    if max_col_excalibur(inst, ord)-min_col_excalibur(inst, ord) > min_pixels_to_use_in_order
+        minc = max(min_col_default(inst, ord), min_col_excalibur(inst,ord), min_col_nonnan(inst,ord))
+        maxc = min(max_col_default(inst, ord), max_col_excalibur(inst,ord), max_col_nonnan(inst,ord))
+    else
+        minc = max(min_col_default(inst, ord), min_col_nonnan(inst,ord))
+        maxc = min(max_col_default(inst, ord), max_col_nonnan(inst,ord))
+    end
+    return minc:maxc
+end
 
 import RvSpectMLBase: metadata_symbols_default, metadata_strings_default
 metadata_symbols_default(::AnyEXPRES) = Symbol[:midpoint, :bjd, :target, :exposure_time, :airmass, :pwv, :moondist, :sundist, :snr_prelim]
