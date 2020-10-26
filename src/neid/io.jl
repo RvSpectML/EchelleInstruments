@@ -48,6 +48,7 @@ function read_data(fn::String, metadata::Dict{Symbol,Any} )
     f = FITS(fn)
     @assert read_key(f[1],"SKY-OBJ")[1] != "Solar"
     λ, flux, var  = FITSIO.read(f["SCIWAVE"]), FITSIO.read(f["Sci Flux"]), FITSIO.read(f["Sci Variance"])
+    metadata[:normalization] = :raw
     Spectra2DBasic(λ, flux, var, NEID2D(), metadata=metadata)
 end
 
@@ -57,6 +58,7 @@ function read_data(fn::String)
     hdr = FITSIO.read_header(f[1])
     metadata = Dict(zip(map(k->Symbol(k),hdr.keys),hdr.values))
     λ, flux, var  = FITSIO.read(f["SCIWAVE"]), read(f["Sci Flux"]), read(f["Sci Variance"])
+    metadata[:normalization] = :raw
     Spectra2DBasic(λ, flux, var, NEID2D(), metadata=metadata)
 end
 
