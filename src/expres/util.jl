@@ -2,8 +2,19 @@
 """ Normalize spectrum based on blaze model (also tryies to include black body function) from FITS file. """
 function blaze_normalize_spectrum!(spectrum::ST) where { ST<:AbstractSpectra }
     @assert haskey(spectrum.metadata,:continuum)
-    spectrum.flux ./= spectrum.metadata[:blaze]
-    spectrum.var ./= (spectrum.metadata[:blaze] ) .^2
+    if spectrum.metadata[:normalization] == :raw
+        spectrum.flux ./= spectrum.metadata[:blaze]
+        spectrum.var ./= (spectrum.metadata[:blaze] ) .^2
+        spectrum.metadata.normalization = :blaze
+    elseif spectrum.metadata[:normalization] == :continuum
+        spectrum.flux .*= spectrum.metadata[:continuum]
+        spectrum.var .*= (spectrum.metadata[:continuum] ) .^2
+        spectrum.metadata[:normalization] = :blaze
+    elseif spectrum.metadata[:normalization] == :blaze
+        # do nothing
+    else
+        @error "Normalizing from " * string(spectrum.metadata.normalization) * " to blaze isn't implemented yet"
+    end
     return spectrum
 end
 
@@ -18,8 +29,19 @@ end
 """ Normalize spectrum based on continuum model from FITS file. """
 function continuum_normalize_spectrum!(spectrum::ST) where { ST<:AbstractSpectra }
     @assert haskey(spectrum.metadata,:continuum)
-    spectrum.flux ./= spectrum.metadata[:continuum] .* spectrum.metadata[:blaze]
-    spectrum.var ./= (spectrum.metadata[:continuum].* spectrum.metadata[:blaze] ) .^2
+    if spectrum.metadata[:normalization] == :raw
+        spectrum.flux ./= spectrum.metadata[:continuum] .* spectrum.metadata[:blaze]
+        spectrum.var ./= (spectrum.metadata[:continuum].* spectrum.metadata[:blaze] ) .^2
+        spectrum.metadata[:normalization] = :continuum
+    elseif spectrum.metadata[:normalization] == :blaze
+        spectrum.flux ./= spectrum.metadata[:continuum]
+        spectrum.var ./= (spectrum.metadata[:continuum] ) .^2
+        spectrum.metadata[:normalization] = :continuum
+    elseif spectrum.metadata[:normalization] == :continuum
+        # do nothing
+    else
+        @error "Normalizing from " * string(spectrum.metadata.normalization) * " to continuum isn't implemented yet"
+    end
     return spectrum
 end
 
@@ -77,7 +99,7 @@ Outputs:
 Warning: Currently, assumes a tellurics value in metadata for each spectra, such as is provided by EXPRES.
 """
 function make_clean_line_list_from_tellurics(line_list::DataFrame, expres_data::DT; Δv_to_avoid_tellurics::Real = default_Δv_to_avoid_tellurics,
-            v_center_to_avoid_tellurics::Real = 0.0
+            v_center_to_avoid_tellurics::Real = 0.0, telluric_threshold::Real = 1
                ) where { T1<:Real, A1<:AbstractArray{T1}, T2<:Real, A2<:AbstractArray{T2}, T3<:Real, A3<:AbstractArray{T3}, IT<:EXPRES.AnyEXPRES, ST<:Spectra2DBasic{T1,T2,T3,A1,A2,A3,IT}, DT<:AbstractArray{ST,1} }
 
    @assert 0.5*RvSpectMLBase.max_bc_earth_rotation <= Δv_to_avoid_tellurics <= 2*RvSpectMLBase.max_bc
@@ -87,7 +109,7 @@ function make_clean_line_list_from_tellurics(line_list::DataFrame, expres_data::
    line_list_to_search_for_tellurics.lambda_hi = line_list_to_search_for_tellurics.lambda.*calc_doppler_factor(Δv_to_avoid_tellurics).*calc_doppler_factor(v_center_to_avoid_tellurics)
    chunk_list_timeseries = RvSpectMLBase.make_chunk_list_timeseries_around_lines(expres_data,line_list_to_search_for_tellurics)
    line_list_to_search_for_tellurics.min_telluric_model_all_obs = find_worst_telluric_in_each_chunk( chunk_list_timeseries, expres_data)
-   line_list_no_tellurics_df = line_list_to_search_for_tellurics |> @filter(_.min_telluric_model_all_obs == 1.0) |> DataFrame
+   line_list_no_tellurics_df = line_list_to_search_for_tellurics |> @filter(_.min_telluric_model_all_obs >= telluric_threshold ) |> DataFrame
 end
 
 default_min_Δv_clean = 8000.0

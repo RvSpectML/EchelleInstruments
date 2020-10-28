@@ -64,6 +64,7 @@ function read_data(f::FITS, metadata::Dict{Symbol,Any} )
     flux = spectrum.*blaze
     # Since EXPRES pipeline returns standard deviation rather than variance
     var = (uncertainty.*blaze).^2
+    metadata[:normalization] = :raw
     Spectra2DBasic(λ, flux, var, EXPRES2D(), metadata=metadata)
 end
 
