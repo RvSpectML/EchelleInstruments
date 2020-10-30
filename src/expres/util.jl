@@ -5,7 +5,7 @@ function blaze_normalize_spectrum!(spectrum::ST) where { ST<:AbstractSpectra }
     if spectrum.metadata[:normalization] == :raw
         spectrum.flux ./= spectrum.metadata[:blaze]
         spectrum.var ./= (spectrum.metadata[:blaze] ) .^2
-        spectrum.metadata.normalization = :blaze
+        spectrum.metadata[:normalization] = :blaze
     elseif spectrum.metadata[:normalization] == :continuum
         spectrum.flux .*= spectrum.metadata[:continuum]
         spectrum.var .*= (spectrum.metadata[:continuum] ) .^2
