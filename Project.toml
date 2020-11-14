@@ -13,7 +13,7 @@ Query = "1a8c2f83-1ff3-5112-b086-8aa67b057ba1"
 RvSpectMLBase = "c48404b2-35ea-40e7-ac7f-06a53de703d6"
 
 [compat]
-CSV = "0.7"
+CSV = "0.7, 0.8"
 DataFrames = "0.21"
 FITSIO = "0.16"
 Interpolations = "0.12, 0.13"
