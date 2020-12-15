@@ -5,7 +5,7 @@ function blaze_normalize_spectrum!(spectrum::ST) where { ST<:AbstractSpectra }
     if spectrum.metadata[:normalization] == :raw
         spectrum.flux ./= spectrum.metadata[:blaze]
         spectrum.var ./= (spectrum.metadata[:blaze] ) .^2
-        spectrum.metadata.normalization = :blaze
+        spectrum.metadata[:normalization] = :blaze
     elseif spectrum.metadata[:normalization] == :continuum
         spectrum.flux .*= spectrum.metadata[:continuum]
         spectrum.var .*= (spectrum.metadata[:continuum] ) .^2
@@ -102,7 +102,7 @@ function make_clean_line_list_from_tellurics(line_list::DataFrame, expres_data::
             v_center_to_avoid_tellurics::Real = 0.0, telluric_threshold::Real = 1
                ) where { T1<:Real, A1<:AbstractArray{T1}, T2<:Real, A2<:AbstractArray{T2}, T3<:Real, A3<:AbstractArray{T3}, IT<:EXPRES.AnyEXPRES, ST<:Spectra2DBasic{T1,T2,T3,A1,A2,A3,IT}, DT<:AbstractArray{ST,1} }
 
-   @assert 0.5*RvSpectMLBase.max_bc_earth_rotation <= Δv_to_avoid_tellurics <= 2*RvSpectMLBase.max_bc
+   @assert 0.5*RvSpectMLBase.max_bc_earth_rotation <= Δv_to_avoid_tellurics <= 4*RvSpectMLBase.max_bc
    line_list_to_search_for_tellurics = copy(line_list)
    # TODO: Check sign convention for v_center_to_avoid_tellurics
    line_list_to_search_for_tellurics.lambda_lo = line_list_to_search_for_tellurics.lambda./calc_doppler_factor(Δv_to_avoid_tellurics).*calc_doppler_factor(v_center_to_avoid_tellurics)

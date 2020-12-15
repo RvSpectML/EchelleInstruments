@@ -7,6 +7,18 @@ Created: August 2020
 
 using DataFrames, FITSIO
 
+""" `read_header( fits_file )`
+Read header from FITS file and return Dict with contents.
+Optional inputs:
+- hdu: Specifies which HDU to read from the FITS file.  (Default: 1)
+"""
+function read_header(f::FITS; header_idx::Integer = 1)
+    @assert 1<=header_idx<=length(f)
+    #@assert read_key(f[header_idx],"SKY-OBJ")[1] == "Solar"
+    hdr = FITSIO.read_header(f[header_idx])
+    metadata = Dict(zip(map(k->Symbol(k),hdr.keys),hdr.values))
+end
+
 """ `read_header( filename )`
 Read header from FITS file and return Dict with contents.
 Optional inputs:
@@ -15,10 +27,7 @@ Optional inputs:
 function read_header(fn::String; header_idx::Integer = 1)
     #println("# Reading: ",fn, " hdu= ",header_idx)
     f = FITS(fn)
-    @assert 1<=header_idx<=length(f)
-    #@assert read_key(f[header_idx],"SKY-OBJ")[1] == "Solar"
-    hdr = FITSIO.read_header(f[header_idx])
-    metadata = Dict(zip(map(k->Symbol(k),hdr.keys),hdr.values))
+    read_header(f, header_idx=header_idx)
 end
 
 """ `read_fits_header( filename )`
@@ -39,20 +48,19 @@ Optional inputs:
 function read_metradata_from_fits
 end
 
-function read_metadata_from_fits(fn::String, fields::Array{Symbol,1} ; hdu::Integer = 1)
+function read_metadata_from_fits(file::Union{String,FITS}, fields::Array{Symbol,1} ; hdu::Integer = 1)
     fields_str=string.(fields)
-    read_metadata_from_fits(fn,hdu=hdu,fields=fields,fields_str=fields_str)
+    read_metadata_from_fits(file,hdu=hdu,fields=fields,fields_str=fields_str)
 end
 
-function read_metadata_from_fits(fn::String, fields_str::AbstractArray{AS,1} ; hdu::Integer = 1)  where { AS<:AbstractString }
+function read_metadata_from_fits(file::Union{String,FITS}, fields_str::AbstractArray{AS,1} ; hdu::Integer = 1)  where { AS<:AbstractString }
     fields = map(f->Symbol(f),fields_str)
-    read_metadata_from_fits(fn,hdu=hdu,fields=fields,fields_str=fields_str)
+    read_metadata_from_fits(file,hdu=hdu,fields=fields,fields_str=fields_str)
 end
 
-function read_metadata_from_fits(fn::String; fields::Array{Symbol,1}, fields_str::AbstractArray{AS,1}, hdu::Integer = 1 )  where { AS<:AbstractString }
+function read_metadata_from_fits(f::FITS; fields::Array{Symbol,1}, fields_str::AbstractArray{AS,1}, hdu::Integer = 1 )  where { AS<:AbstractString }
     @assert length(fields) == length(fields_str)
     @assert 1 <= hdu <= 3
-    f = FITS(fn)
     hdr = FITSIO.read_header(f[hdu])
     #values = Vector{Any}(undef,length(fields))
     values_mask = falses(length(fields))
@@ -69,6 +77,11 @@ function read_metadata_from_fits(fn::String; fields::Array{Symbol,1}, fields_str
 
     df = Dict{Symbol,Any}(zip(fields[values_mask],values))
     return df
+end
+
+function read_metadata_from_fits(fn::String; fields::Array{Symbol,1}, fields_str::AbstractArray{AS,1}, hdu::Integer = 1 )  where { AS<:AbstractString }
+    f = FITS(fn)
+    read_metadata_from_fits(f; fields=fields, fields_str=fields_str, hdu=hdu )
 end
 
 function check_metadata_fields_expected_present(df::Dict,  fields::Array{Symbol,1} ) #, fields_str::AbstractArray{AS,1} )  where { AS<:AbstractString }
