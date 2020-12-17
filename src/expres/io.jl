@@ -55,6 +55,55 @@ function add_metadata_from_fits!(df::DataFrame, fn::String)
     return df
 end
 
+#=
+import NaNMath
+
+function running_mean(x::AbstractArray{T1,1}; smooth_length::Integer ) where { T1 <: Real }
+    n = length(x)
+    smooth = zeros(T1,n)
+    for i in 1:n
+        v = view(x,max(1,i-smooth_length):min(i+smooth_length,n))
+        smooth[i] = NaNMath.sum(v) / (2*smooth_length+1)
+        #=
+        num = zero(T1)
+        denom = zero(T1)
+        for y in v
+            if y != NaN
+                num += y
+                denom += 1
+            end
+        end
+        smooth[i] = num/denom
+        =#
+    end
+    return smooth
+end
+
+=#
+
+default_smooth_blaze_degree = 8
+default_smooth_blaze_length = 60
+
+function smooth_blaze(x::AbstractArray{T1,1}; degree::Integer = default_smooth_blaze_degree, smooth_length::Integer = default_smooth_blaze_length) where { T1 <: Real }
+    poly = Polynomials.fit(1:length(x),x,degree,weights=max.(zero(x),x) )
+    poly.(collect(range(1.0,length=length(x))))
+end
+
+function smooth_blaze(x::AbstractArray{T1,2}; degree::Integer = default_smooth_blaze_degree, smooth_length::Integer = default_smooth_blaze_length) where { T1 <: Real }
+    return x  # WARNING bypassing this for now
+    smooth_2d = fill(NaN,size(x))
+    for i in 1:size(x,2)
+        num_pix_nonnan = length(minmax_col_nonnan[i])
+        deg = num_pix_nonnan > degree-2 ? degree : num_pix_nonnan-2
+        if num_pix_nonnan > 1
+            #println("# Smoothing order idx ", i, " pixels ", minmax_col_nonnan[i])
+            smooth_2d[minmax_col_nonnan[i],i] .= smooth_blaze(view(x,minmax_col_nonnan[i],size(x,2)), degree=deg, smooth_length=smooth_length)
+        end
+    end
+    smooth_2d
+end
+
+
 """ Read EXPRES data from FITS file, and return in a Spectra2DBasic object."""
 function read_data   end
 
@@ -73,15 +122,17 @@ function read_data(f::FITS, metadata::Dict{Symbol,Any}; normalization::Symbol = 
     elseif normalization == :raw
         # Restore fluxes to include the blaze function and scale uncertainties appropriately
         blaze = haskey(metadata,:blaze) ? metadata[:blaze] : FITSIO.read(f["optimal"],"blaze")
-        flux = spectrum.*blaze
+        blaze_smoothed = smooth_blaze(blaze)
+        flux = spectrum.*blaze_smoothed
         # Since EXPRES pipeline returns standard deviation rather than variance
-        var = (uncertainty.*blaze).^2
+        var = (uncertainty.*blaze_smoothed).^2
         metadata[:normalization] = :raw
     elseif normalization == :continuum
         blaze = haskey(metadata,:blaze) ? metadata[:blaze] : FITSIO.read(f["optimal"],"blaze")
+        blaze_smoothed = smooth_blaze(blaze)
         continuum = haskey(metadata,:continuum) ? metadata[:continuum] : FITSIO.read(f["optimal"],"continuum")
-        flux = spectrum.*blaze./continuum
-        var = (uncertainty.*blaze./continuum).^2
+        flux = spectrum./continuum
+        var = (uncertainty./continuum).^2
         metadata[:normalization] = :continuum
     else
         @error "# Reading data directly with normalization " * string(normalization) * " is not implemented."
@@ -95,6 +146,7 @@ function read_data(fn::String, metadata = Dict{Symbol,Any}();
                         store_continuum::Bool = !store_min_data, store_tellurics::Bool = !store_min_data,
                         store_pixel_mask::Bool = !store_min_data, store_excalibur_mask::Bool = use_excalibur,
                         store_all_metadata::Bool = !store_min_data )
+    # println("# Reading data from ", fn)
     f = FITS(fn)
     if store_all_metadata || isempty(metadata)
         read_metadata(f,fn)

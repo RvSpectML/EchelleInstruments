@@ -8,6 +8,7 @@ module EchelleInstruments
 
 using RvSpectMLBase
 using DataFrames, CSV, Query
+using FITSIO
 
 include("common.jl")   # Mostly trait functions to be specialized by instruments
 #function get_inst_module end

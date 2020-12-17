@@ -5,8 +5,6 @@ Author: Eric Ford
 Created: August 2020
 """
 
-using DataFrames, FITSIO
-
 """ `read_header( fits_file )`
 Read header from FITS file and return Dict with contents.
 Optional inputs:

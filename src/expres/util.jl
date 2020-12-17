@@ -3,8 +3,9 @@
 function blaze_normalize_spectrum!(spectrum::ST) where { ST<:AbstractSpectra }
     @assert haskey(spectrum.metadata,:continuum)
     if spectrum.metadata[:normalization] == :raw
-        spectrum.flux ./= spectrum.metadata[:blaze]
-        spectrum.var ./= (spectrum.metadata[:blaze] ) .^2
+        blaze_smoothed = smooth_blaze(blaze)
+        spectrum.flux ./= blaze_smoothed
+        spectrum.var ./= (blaze_smoothed ) .^2
         spectrum.metadata[:normalization] = :blaze
     elseif spectrum.metadata[:normalization] == :continuum
         spectrum.flux .*= spectrum.metadata[:continuum]
@@ -30,8 +31,9 @@ end
 function continuum_normalize_spectrum!(spectrum::ST) where { ST<:AbstractSpectra }
     @assert haskey(spectrum.metadata,:continuum)
     if spectrum.metadata[:normalization] == :raw
-        spectrum.flux ./= spectrum.metadata[:continuum] .* spectrum.metadata[:blaze]
-        spectrum.var ./= (spectrum.metadata[:continuum].* spectrum.metadata[:blaze] ) .^2
+        blaze_smoothed = smooth_blaze(blaze)
+        spectrum.flux ./= spectrum.metadata[:continuum] .* blaze_smoothed
+        spectrum.var ./= (spectrum.metadata[:continuum].* blaze_smoothed ) .^2
         spectrum.metadata[:normalization] = :continuum
     elseif spectrum.metadata[:normalization] == :blaze
         spectrum.flux ./= spectrum.metadata[:continuum]
