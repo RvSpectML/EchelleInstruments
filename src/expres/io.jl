@@ -128,8 +128,8 @@ function read_data(f::FITS, metadata::Dict{Symbol,Any}; normalization::Symbol = 
         var = (uncertainty.*blaze_smoothed).^2
         metadata[:normalization] = :raw
     elseif normalization == :continuum
-        blaze = haskey(metadata,:blaze) ? metadata[:blaze] : FITSIO.read(f["optimal"],"blaze")
-        blaze_smoothed = smooth_blaze(blaze)
+        #blaze = haskey(metadata,:blaze) ? metadata[:blaze] : FITSIO.read(f["optimal"],"blaze")
+        #blaze_smoothed = smooth_blaze(blaze)
         continuum = haskey(metadata,:continuum) ? metadata[:continuum] : FITSIO.read(f["optimal"],"continuum")
         flux = spectrum./continuum
         var = (uncertainty./continuum).^2
