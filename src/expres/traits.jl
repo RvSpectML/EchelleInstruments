@@ -48,8 +48,8 @@ function get_pixel_range(inst::EXPRES2D, ord::Integer)
 end
 
 import RvSpectMLBase: metadata_symbols_default, metadata_strings_default
-metadata_symbols_default(::AnyEXPRES) = Symbol[:midpoint, :bjd, :target, :exposure_time, :airmass, :pwv, :moondist, :sundist, :snr_prelim]
-metadata_strings_default(::AnyEXPRES) = String["MIDPOINT", "BARYMJD", "OBJECT", "AEXPTIME", "AIRMASS", "PWV", "MOONDIST", "SUNDIST", "channel5_SNR"]
+metadata_symbols_default(::AnyEXPRES) = Symbol[:midpoint, :bjd, :target, :exposure_time, :airmass, :pwv, :moondist, :sundist, :snr_prelim, :expcount, :wavecal]
+metadata_strings_default(::AnyEXPRES) = String["MIDPOINT", "BARYMJD", "OBJECT", "AEXPTIME", "AIRMASS", "PWV", "MOONDIST", "SUNDIST", "channel5_SNR", "EXPCOUNT", "WAVE_CAL"]
 
 #metadata_hdu2_symbols_default(::AnyEXPRES) = Symbol[:S_indicator, :Hα_indicator, :Hα_width, :ccf_width, :σ_ccf_width, :bis_indicator]
 #metadata_hdu2_strings_default(::AnyEXPRES) = String["S-VALUE", "HALPHA", "HWIDTH", "CCFFWHM", "CCFFWHME", "BIS"]
