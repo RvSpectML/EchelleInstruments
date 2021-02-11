@@ -9,7 +9,7 @@ Created: August 2020
 """Create Dataframe containing filenames and key data for all files neid*.fits in directory"""
 function make_manifest(data_path::String)
     dir_filelist = readdir(data_path,join=true)
-    idx_spectra = map(fn->occursin(r"^\d+_\d+\.\d+\.fits$", last(split(fn,'/')) ),dir_filelist)
+    idx_spectra = map(fn->occursin(r"^[a-zA-Z0-9]+_\d+\.\d+\.fits$", last(split(fn,'/')) ),dir_filelist)
     spectra_filelist = dir_filelist[idx_spectra]
     @assert length(spectra_filelist) >= 1
     df_files = DataFrame(read_metadata(spectra_filelist[1]))
