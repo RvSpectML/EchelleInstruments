@@ -8,7 +8,7 @@ Created: August 2020
 """Create Dataframe containing filenames and key data for all files neid*.fits in directory"""
 function make_manifest(data_path::String ; max_spectra_to_use::Int = 1000 )
     dir_filelist = readdir(data_path,join=true)
-    idx_spectra = map(fn->occursin(r"^neid\w+\.fits$", last(split(fn,'/')) ),dir_filelist)
+    idx_spectra = map(fn->occursin(r"^neidL1_\w+\.fits$", last(split(fn,'/')) ),dir_filelist)
     spectra_filelist = dir_filelist[idx_spectra]
     #=
     df_files = DataFrame(Filename = String[], target = String[], bjd = Float64[], ssbz=Float64[] )
@@ -40,6 +40,38 @@ function add_metadata_from_fits!(df::DataFrame, fn::String)
     push!(df, metadata_keep)
     return df
 end
+
+
+""" Read NEID data from FITS file, and return in a Spectra2DBasic object."""
+function read_data   end
+
+function read_data(fn::String, metadata::Dict{Symbol,Any} )
+    f = FITS(fn)
+    λ, flux, var  = FITSIO.read(f["SCIWAVE"]), FITSIO.read(f["SCIFLUX"]), FITSIO.read(f["SCIVAR"])
+    metadata[:normalization] = :raw
+    Spectra2DBasic(λ, flux, var, NEID2D(), metadata=metadata)
+end
+
+function read_data(fn::String)
+    f = FITS(fn)
+    hdr = FITSIO.read_header(f[1])
+    metadata = Dict(zip(map(k->Symbol(k),hdr.keys),hdr.values))
+    λ, flux, var  = FITSIO.read(f["SCIWAVE"]), read(f["SCIFLUX"]), read(f["SCIVAR"])
+    metadata[:normalization] = :raw
+    Spectra2DBasic(λ, flux, var, NEID2D(), metadata=metadata)
+end
+
+function read_data(dfr::DataFrameRow{DataFrame,DataFrames.Index})
+    fn = dfr.Filename
+    metadata = Dict(zip(keys(dfr),values(dfr)))
+    read_data(fn,metadata)
+end
+
+
+
+""" Functions that were used with NEID data products prior to shipping to KPNO """
+module PreShip
+using DataFrames, FITSIO
 
 """ Read NEID (non-solar) data from FITS file, and return in a Spectra2DBasic object."""
 function read_data   end
@@ -94,7 +126,6 @@ function read_solar_data(dfr::DataFrameRow{DataFrame,DataFrames.Index})
     read_solar_data(fn,metadata)
 end
 
-
 """ Read CSV of NEID drift corrections, interpolate to bjd's in df and insert into df[:,drift]. """
 function read_drift_corrections!(fn::String, df::DataFrame, df_time_col::Symbol = :bjd)
     drift_corrections = CSV.read(fn, DataFrame, header=["bjd", "sci_drift", "cal_drift"]);
@@ -114,6 +145,8 @@ function read_barycentric_corrections!(fn::String, df::DataFrame, df_time_col::S
     df[!,:ssb_rv] = ssb_interp.(df[!,df_time_col])
     return df
 end
+
+end  # module PreShip
 
 """ Read space delimited file with differential extinction corrections, interpolate to bjd's in df and insert into df[:,diff_ext_rv]. """
 function read_differential_extinctions!(fn::String, df::DataFrame, df_time_col::Symbol = :bjd)
