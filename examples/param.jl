@@ -5,8 +5,10 @@ end
 
 global tophap_ccf_mask_scale_factor=1.6
 
+
 global fits_target_str
-if fits_target_str == "Solar"
+if fits_target_str == "Solar" || fits_target_str == "Sun"
+   max_spectra_to_use = 40
    global linelist_for_ccf_filename = "G2.espresso.mas"
    hostname = gethostname()
    if occursin("aci.ics.psu.edu",hostname)
@@ -20,7 +22,7 @@ if fits_target_str == "Solar"
    global df_files
    global df_files_use = df_files |>
       @filter( _.target == fits_target_str ) |>
-      @filter(bjd_first_good <= _.bjd < bjd_last_good) |>
+      #@filter(bjd_first_good <= _.bjd < bjd_last_good) |>
       @take(max_spectra_to_use) |>
       DataFrame
 end
