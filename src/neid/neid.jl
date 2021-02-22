@@ -20,6 +20,7 @@ import ..EchelleInstruments: default_Δv_to_avoid_tellurics
 using CSV, DataFrames, Query
 using FITSIO
 using Interpolations
+using NaNMath, Missings
 
 """ Trait for 1D Extracted spectra from NEID """
 struct NEID1D <: AbstractInstrument1D end

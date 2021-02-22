@@ -8,7 +8,7 @@ Created: August 2020
 """Create Dataframe containing filenames and key data for all files neid*.fits in directory"""
 function make_manifest(data_path::String ; max_spectra_to_use::Int = 1000 )
     dir_filelist = readdir(data_path,join=true)
-    idx_spectra = map(fn->occursin(r"^neidL1_\w+\.fits$", last(split(fn,'/')) ),dir_filelist)
+    idx_spectra = map(fn->occursin(r"^neidL1_\d+[T\.]\d+\.fits$", last(split(fn,'/')) ),dir_filelist)
     spectra_filelist = dir_filelist[idx_spectra]
     #=
     df_files = DataFrame(Filename = String[], target = String[], bjd = Float64[], ssbz=Float64[] )
@@ -17,9 +17,29 @@ function make_manifest(data_path::String ; max_spectra_to_use::Int = 1000 )
     =#
     @assert length(spectra_filelist) >= 1
     df_files = DataFrame(read_metadata(spectra_filelist[1]))
+    keys = propertynames(df_files)
+    allowmissing!(df_files, keys[map(k->k∉[:Filename, :bjd, :target],keys)] )
+
     if length(spectra_filelist) >= 2
         map(fn->add_metadata_from_fits!(df_files,fn),spectra_filelist[2:end])
     end
+    #=
+    for i in 2:length(spectra_filelist)
+        try
+            add_metadata_from_fits!(df_files,spectra_filelist[i])
+
+        catch
+            println("# Problem reading ", spectra_filelist[i])
+            fields_to_save = metadata_symbols_default(NEID2D())
+            fields_str_to_save = metadata_strings_default(NEID2D())
+
+            metadata_tmp = read_metadata_from_fits(spectra_filelist[i],fields=fields_to_save,fields_str=fields_str_to_save)
+            println("Before: ", metadata_tmp)
+            #println("After : ", metadata_tmp)
+            #push!(df_files,metadata_tmp)
+        end
+    end
+    =#
     df_files
 
 end
@@ -37,6 +57,17 @@ end
 function add_metadata_from_fits!(df::DataFrame, fn::String)
     metadata_keep = read_metadata(fn)
     #if metadata_keep[:target] != "Solar" return df end
+
+    for k in propertynames(df)
+        if typeof(metadata_keep[k]) == Missing continue end
+        if typeof(metadata_keep[k]) == Nothing
+            metadata_keep[k] = missing
+            continue
+        end
+        if (eltype(df[!,k]) <: Union{Real,Union{<:Real,Missing}}) && !(typeof(metadata_keep[k]) <: Union{Real,Union{<:Real,Missing}})
+            metadata_keep[k] = missing
+        end
+    end
     push!(df, metadata_keep)
     return df
 end
@@ -45,20 +76,36 @@ end
 """ Read NEID data from FITS file, and return in a Spectra2DBasic object."""
 function read_data   end
 
-function read_data(fn::String, metadata::Dict{Symbol,Any} )
-    f = FITS(fn)
-    λ, flux, var  = FITSIO.read(f["SCIWAVE"]), FITSIO.read(f["SCIFLUX"]), FITSIO.read(f["SCIVAR"])
+function read_data(f::FITS, metadata::Dict{Symbol,Any} )
+    @assert length(f) >= 2
+    @assert all(map(i->typeof(f[i]) <: FITSIO.ImageHDU,2:length(f)))
+    img_idx = Dict(map(i->first(read_key(f[i],"EXTNAME"))=>i,2:length(f)))
+    λ, flux, var  = FITSIO.read(f[img_idx["SCIWAVE"]]), FITSIO.read(f[img_idx["SCIFLUX"]]), FITSIO.read(f[img_idx["SCIVAR"]])
     metadata[:normalization] = :raw
     Spectra2DBasic(λ, flux, var, NEID2D(), metadata=metadata)
+end
+
+
+function read_data(f::FITS, metadata::Dict{Symbol,Any}, orders_to_read::AbstractRange )
+    @assert length(f) >= 2
+    @assert all(map(i->typeof(f[i]) <: FITSIO.ImageHDU,2:length(f)))
+    img_idx = Dict(map(i->first(read_key(f[i],"EXTNAME"))=>i,2:length(f)))
+    λ, flux, var  = FITSIO.read(f[img_idx["SCIWAVE"]],:,orders_to_read), FITSIO.read(f[img_idx["SCIFLUX"]],:,orders_to_read), FITSIO.read(f[img_idx["SCIVAR"]],:,orders_to_read)
+    metadata[:normalization] = :raw
+    Spectra2DBasic(λ, flux, var, NEID2D(), metadata=metadata)
+end
+
+
+function read_data(fn::String, metadata::Dict{Symbol,Any} )
+    f = FITS(fn)
+    read_data(f, metadata)
 end
 
 function read_data(fn::String)
     f = FITS(fn)
     hdr = FITSIO.read_header(f[1])
     metadata = Dict(zip(map(k->Symbol(k),hdr.keys),hdr.values))
-    λ, flux, var  = FITSIO.read(f["SCIWAVE"]), read(f["SCIFLUX"]), read(f["SCIVAR"])
-    metadata[:normalization] = :raw
-    Spectra2DBasic(λ, flux, var, NEID2D(), metadata=metadata)
+    read_data(f, metadata)
 end
 
 function read_data(dfr::DataFrameRow{DataFrame,DataFrames.Index})
@@ -69,84 +116,6 @@ end
 
 
 
-""" Functions that were used with NEID data products prior to shipping to KPNO """
-module PreShip
-using DataFrames, FITSIO
-
-""" Read NEID (non-solar) data from FITS file, and return in a Spectra2DBasic object."""
-function read_data   end
-
-function read_data(fn::String, metadata::Dict{Symbol,Any} )
-    f = FITS(fn)
-    @assert read_key(f[1],"SKY-OBJ")[1] != "Solar"
-    λ, flux, var  = FITSIO.read(f["SCIWAVE"]), FITSIO.read(f["Sci Flux"]), FITSIO.read(f["Sci Variance"])
-    metadata[:normalization] = :raw
-    Spectra2DBasic(λ, flux, var, NEID2D(), metadata=metadata)
-end
-
-function read_data(fn::String)
-    f = FITS(fn)
-    @assert read_key(f[1],"SKY-OBJ")[1] != "Solar"
-    hdr = FITSIO.read_header(f[1])
-    metadata = Dict(zip(map(k->Symbol(k),hdr.keys),hdr.values))
-    λ, flux, var  = FITSIO.read(f["SCIWAVE"]), read(f["Sci Flux"]), read(f["Sci Variance"])
-    metadata[:normalization] = :raw
-    Spectra2DBasic(λ, flux, var, NEID2D(), metadata=metadata)
-end
-
-function read_data(dfr::DataFrameRow{DataFrame,DataFrames.Index})
-    fn = dfr.Filename
-    metadata = Dict(zip(keys(dfr),values(dfr)))
-    read_data(fn,metadata)
-end
-
-""" Read NEID Solar data from FITS file, and return in a Spectra2DBasic object."""
-function read_solar_data
-end
-
-function read_solar_data(fn::String, metadata::Dict{Symbol,Any} )
-    f = FITS(fn)
-    @assert read_key(f[1],"SKY-OBJ")[1] == "Solar"
-    λ, flux, var  = read(f["SKYWAVE"]), read(f["Sky Flux"]), read(f["Sky Variance"])
-    Spectra2DBasic(λ, flux, var, NEID2D(), metadata=metadata)
-end
-
-function read_solar_data(fn::String)
-    f = FITS(fn)
-    @assert read_key(f[1],"SKY-OBJ")[1] == "Solar"
-    hdr = FITSIO.read_header(f[1])
-    metadata = Dict(zip(map(k->Symbol(k),hdr.keys),hdr.values))
-    λ, flux, var  = FITSIO.read(f["SKYWAVE"]), FITSIO.read(f["Sky Flux"]), FITSIO.ead(f["Sky Variance"])
-    Spectra2DBasic(λ, flux, var, NEID2D(), metadata=metadata)
-end
-
-function read_solar_data(dfr::DataFrameRow{DataFrame,DataFrames.Index})
-    fn = dfr.Filename
-    metadata = Dict(zip(keys(dfr),values(dfr)))
-    read_solar_data(fn,metadata)
-end
-
-""" Read CSV of NEID drift corrections, interpolate to bjd's in df and insert into df[:,drift]. """
-function read_drift_corrections!(fn::String, df::DataFrame, df_time_col::Symbol = :bjd)
-    drift_corrections = CSV.read(fn, DataFrame, header=["bjd", "sci_drift", "cal_drift"]);
-    @assert any(isequal(:bjd),propertynames(drift_corrections))
-    @assert any(isequal(:cal_drift),propertynames(drift_corrections))
-    drift_interp = LinearInterpolation(drift_corrections[!,:bjd],drift_corrections[!,:cal_drift])
-    df[!,:drift] = -drift_interp.(df[!,df_time_col])
-    return df
-end
-
-""" Read CSV of NEID barycentric corrections, interpolate to bjd's in df and insert into df[:,ssb_rv]. """
-function read_barycentric_corrections!(fn::String, df::DataFrame, df_time_col::Symbol = :bjd)
-    ssb_corrections = CSV.read(fn, DataFrame, header=["bjd","rv_ssb"], select=[1,2], types=types=[Float64,Float64], datarow=2, silencewarnings=true);
-    @assert any(isequal(:bjd),propertynames(ssb_corrections))
-    @assert any(isequal(:rv_ssb),propertynames(ssb_corrections))
-    ssb_interp = LinearInterpolation(ssb_corrections.bjd, ssb_corrections.rv_ssb)
-    df[!,:ssb_rv] = ssb_interp.(df[!,df_time_col])
-    return df
-end
-
-end  # module PreShip
 
 """ Read space delimited file with differential extinction corrections, interpolate to bjd's in df and insert into df[:,diff_ext_rv]. """
 function read_differential_extinctions!(fn::String, df::DataFrame, df_time_col::Symbol = :bjd)

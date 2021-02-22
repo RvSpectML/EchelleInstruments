@@ -7,7 +7,7 @@ verbose = true
 
 # USER: You must create a data_paths.jl file in one of the default_paths_to_search listed below. It need only contain one line:
 # solar_data_path = "/home/eford/Data/SolarSpectra/NEID_solar/"
-target_subdir = "202101"   # USER: Replace with directory of your choice
+target_subdir = "good_days"   # USER: Replace with directory of your choice
  #fits_target_str = "Solar"
  fits_target_str = "Sun"
  output_dir = "examples/output"
@@ -30,6 +30,7 @@ if need_to(pipeline_plan,:read_spectra)
 if verbose println("# Reading in ", size(df_files_use,1), " FITS files.")  end
    @time all_spectra = map(NEID.read_data,eachrow(df_files_use))
    dont_need_to!(pipeline_plan,:read_spectra)
+
 
 #=
 # Pre-ship corrections

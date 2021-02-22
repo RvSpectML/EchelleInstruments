@@ -32,16 +32,21 @@ min_col_default(::NEID2D, ord::Integer) = 451              # Avoiding smaller co
 max_col_default(::NEID2D, ord::Integer) = 9216 - (min_col_default(NEID2D(),ord)-1)   # Avoiding larger columns for symmetry
 =#
 # At KPNO
-orders_to_use_default(::NEID2D) = 60:90  # relatively safe
 #orders_to_use_default(::NEID2D) = 55:113 # everything plaussibly usable as of DRS 0.5
+#orders_to_use_default(::NEID2D) = 56:111 # everything plaussibly usable as of DRS 0.6
+#orders_to_use_default(::NEID2D) = 60:90  # relatively safe
+orders_to_use_default(::NEID2D) = 56:98   # avoid worst of tellurics
 function min_col_default(::NEID2D, ord::Integer)
+    return 1445 +500 # DRS 0.6, avoiding NaN in cols 1435-1444
     if ord == 55
         return 787
     else
         return 500
     end
 end
-max_col_default(::NEID2D, ord::Integer) = 8429
+#max_col_default(::NEID2D, ord::Integer) = 8429  # DRS 0.5
+#max_col_default(::NEID2D, ord::Integer) = 9215  # DRS 0.6
+max_col_default(::NEID2D, ord::Integer) = 6214  # DRS 0.6, avoiding NaN in col 6215
 
 import RvSpectMLBase: get_pixel_range
 function get_pixel_range(inst::NEID2D, ord::Integer)
@@ -68,7 +73,7 @@ get_inst_module(::AnyNEID) = NEID
 import RvSpectMLBase: get_λ_range
 function get_λ_range(data::CLT) where { T1<:Real, T2<:Real, T3<:Real, A1<:AbstractArray{T1,2}, A2<:AbstractArray{T2,2}, A3<:AbstractArray{T3,2},
                                        IT<:AnyNEID, CLT<:Spectra2DBasic{T1,T2,T3,A1,A2,A3,IT} }
-   (λmin, λmax) = extrema(data.λ)
+   (λmin, λmax) = NaNMath.extrema(data.λ)
    return (min=λmin, max=λmax)
 end
 
