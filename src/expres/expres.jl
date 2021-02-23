@@ -19,6 +19,7 @@ import ..EchelleInstruments: default_Δv_to_avoid_tellurics
 using DataFrames, Query, FITSIO
 using Dates  # If need to use datetime2julian() to get jd.  Need to check about getting BJD.
 using Polynomials  # For smoothing "blaze" that includes quantum efficiency variations
+using Missings
 
 """ Trait for 1D Extracted spectra from EXPRES """
 struct EXPRES1D <: AbstractInstrument1D end

@@ -9,10 +9,12 @@ Created: August 2020
 """Create Dataframe containing filenames and key data for all files neid*.fits in directory"""
 function make_manifest(data_path::String)
     dir_filelist = readdir(data_path,join=true)
-    idx_spectra = map(fn->occursin(r"^[a-zA-Z0-9]+_\d+\.\d+\.fits$", last(split(fn,'/')) ),dir_filelist)
+    idx_spectra = map(fn->occursin(r"^[a-zA-Z0-9]+_\d+[T\.]\d+\.fits$", last(split(fn,'/')) ),dir_filelist)
     spectra_filelist = dir_filelist[idx_spectra]
     @assert length(spectra_filelist) >= 1
     df_files = DataFrame(read_metadata(spectra_filelist[1]))
+    keys = propertynames(df_files)
+    allowmissing!(df_files, keys[map(k->k∉[:Filename, :bjd, :target],keys)] )
     if length(spectra_filelist) >= 2
         map(fn->add_metadata_from_fits!(df_files,fn),spectra_filelist[2:end])
     end
@@ -51,6 +53,16 @@ end
 Return updated dataframe after adding metadata from FITS file header."""
 function add_metadata_from_fits!(df::DataFrame, fn::String)
     metadata_keep = read_metadata(fn)
+    for k in propertynames(df)
+        if typeof(metadata_keep[k]) == Missing continue end
+        if typeof(metadata_keep[k]) == Nothing
+            metadata_keep[k] = missing
+            continue
+        end
+        if (eltype(df[!,k]) <: Union{Real,Union{<:Real,Missing}}) && !(typeof(metadata_keep[k]) <: Union{Real,Union{<:Real,Missing}})
+            metadata_keep[k] = missing
+        end
+    end
     push!(df, metadata_keep)
     return df
 end
