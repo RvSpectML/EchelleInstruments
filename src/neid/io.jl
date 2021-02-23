@@ -82,7 +82,9 @@ function read_data(f::FITS, metadata::Dict{Symbol,Any} )
     img_idx = Dict(map(i->first(read_key(f[i],"EXTNAME"))=>i,2:length(f)))
     λ, flux, var  = FITSIO.read(f[img_idx["SCIWAVE"]]), FITSIO.read(f[img_idx["SCIFLUX"]]), FITSIO.read(f[img_idx["SCIVAR"]])
     metadata[:normalization] = :raw
-    Spectra2DBasic(λ, flux, var, NEID2D(), metadata=metadata)
+    spectrum = Spectra2DBasic(λ, flux, var, NEID2D(), metadata=metadata)
+    apply_doppler_boost!(spectrum,metadata)
+    return spectrum
 end
 
 
@@ -92,7 +94,9 @@ function read_data(f::FITS, metadata::Dict{Symbol,Any}, orders_to_read::Abstract
     img_idx = Dict(map(i->first(read_key(f[i],"EXTNAME"))=>i,2:length(f)))
     λ, flux, var  = FITSIO.read(f[img_idx["SCIWAVE"]],:,orders_to_read), FITSIO.read(f[img_idx["SCIFLUX"]],:,orders_to_read), FITSIO.read(f[img_idx["SCIVAR"]],:,orders_to_read)
     metadata[:normalization] = :raw
-    Spectra2DBasic(λ, flux, var, NEID2D(), metadata=metadata)
+    spectrum = Spectra2DBasic(λ, flux, var, NEID2D(), metadata=metadata)
+    apply_doppler_boost!(spectrum,metadata)
+    return spectrum
 end
 
 
@@ -114,8 +118,9 @@ function read_data(dfr::DataFrameRow{DataFrame,DataFrames.Index})
     read_data(fn,metadata)
 end
 
+function apply_barycentric_correction!(λ::AbstractArray{T,1}, z::Real) where { T<:Real }
 
-
+end
 
 """ Read space delimited file with differential extinction corrections, interpolate to bjd's in df and insert into df[:,diff_ext_rv]. """
 function read_differential_extinctions!(fn::String, df::DataFrame, df_time_col::Symbol = :bjd)
