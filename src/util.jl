@@ -113,3 +113,12 @@ function make_ranges_without_tellurics(telluric_list::DataFrame; min_Δv::Real =
     return df_nice_sized_chunks
     #return df_large_chunks
 end
+
+
+function add_line_boundaries_to_line_list(line_list::DataFrame; Δv_to_avoid_tellurics::Real = 0.0, v_center_to_avoid_tellurics::Real = 0.0 )
+    @assert 0.5*RvSpectMLBase.max_bc_earth_rotation <= Δv_to_avoid_tellurics <= 4*RvSpectMLBase.max_bc
+    line_list_to_search_for_tellurics = copy(line_list)
+    line_list_to_search_for_tellurics.lambda_lo = line_list_to_search_for_tellurics.lambda./calc_doppler_factor(Δv_to_avoid_tellurics).*calc_doppler_factor(v_center_to_avoid_tellurics)
+    line_list_to_search_for_tellurics.lambda_hi = line_list_to_search_for_tellurics.lambda.*calc_doppler_factor(Δv_to_avoid_tellurics).*calc_doppler_factor(v_center_to_avoid_tellurics)
+    return line_list_to_search_for_tellurics
+end

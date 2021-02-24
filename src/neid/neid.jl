@@ -40,6 +40,7 @@ export orders_to_use_default, min_col_default, max_col_default
 export metadata_symbols_default, metadata_strings_default
 export default_ccf_mask_v_width
 export get_inst_module
+export bad_col_ranges
 
 include("io.jl")
 # not exported, since don't have parameter that specializes to instrument
@@ -52,6 +53,7 @@ include("util.jl") # TODO
 #export continuum_normalize_spectrum!, continuum_normalize_spectra! # Not yet implemented
 export filter_line_list
 export make_clean_line_list_from_tellurics
+export make_λ_list_for_bad_columns
 #export choose_obs_idx_for_init_guess
 
 end
