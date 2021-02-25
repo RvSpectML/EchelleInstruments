@@ -111,6 +111,7 @@ function make_clean_line_list_from_tellurics(line_list::DataFrame, neid_data::DT
 
 end
 
+#=
 function add_line_boundaries_to_line_list(line_list::DataFrame; Δv_to_avoid_tellurics::Real = 0.0, v_center_to_avoid_tellurics::Real = 0.0 )
     @assert 0.5*RvSpectMLBase.max_bc_earth_rotation <= Δv_to_avoid_tellurics <= 4*RvSpectMLBase.max_bc
     line_list_to_search_for_tellurics = copy(line_list)
@@ -118,6 +119,7 @@ function add_line_boundaries_to_line_list(line_list::DataFrame; Δv_to_avoid_tel
     line_list_to_search_for_tellurics.lambda_hi = line_list_to_search_for_tellurics.lambda.*calc_doppler_factor(Δv_to_avoid_tellurics).*calc_doppler_factor(v_center_to_avoid_tellurics)
     return line_list_to_search_for_tellurics
 end
+=#
 
 function choose_obs_idx_for_init_guess(df::DataFrame, inst::IT )  where { IT<:NEID.AnyNEID }
    @assert size(df,1) >= 1
