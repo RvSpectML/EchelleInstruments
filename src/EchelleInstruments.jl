@@ -22,7 +22,7 @@ export  read_metadata_from_fits, read_fits_header
 
 include("util.jl")
 # TODO: Decide what to export from util.jl
-export add_line_boundaries_to_line_list
+#export add_line_boundaries_to_line_list, expand_line_boundaries_in_line_list  # moved to RvSpectMLBase
 
 include("expres/expres.jl")
 import .EXPRES: EXPRES1D, EXPRES2D, AnyEXPRES #, get_inst_module
