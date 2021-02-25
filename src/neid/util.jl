@@ -35,10 +35,10 @@ function make_λ_list_for_bad_columns(line_list::DataFrame, neid_data::DT )  whe
                 pixhi -= 1
                 pixlo -= 1
             end
-            Δλ_pixel = (first(neid_data).λ[pixhi,order] - first(neid_data).λ[pixlo,order]) * first(neid_data).metadata[:doppler_factor]
-            (λ_lo, λ_hi) = mapreduce(obsid->extrema(neid_data[obsid].λ[bcr,order])
-                               .*neid_data[obsid].metadata[:doppler_factor]
-                               , (a,b) -> (min(a[1],b[1]), max(a[2],b[2])), 1:length(neid_data) )
+            doppler_factors = map(obsid-> haskey(neid_data[obsid].metadata,:doppler_factor) ? neid_data[obsid].metadata[:doppler_factor] : 1 , 1:length(neid_data))
+            Δλ_pixel = (first(neid_data).λ[pixhi,order] - first(neid_data).λ[pixlo,order]) * doppler_factors[1]
+            (λ_lo, λ_hi) = mapreduce(obsid->extrema(neid_data[obsid].λ[bcr,order]) .* doppler_factors[obsid],
+                               (a,b) -> (min(a[1],b[1]), max(a[2],b[2])),   1:length(neid_data) )
             λ_lo -= Δλ_pixel/2
             λ_hi += Δλ_pixel/2
             push!(df_bad_col_λs, Dict(:order=>order, :lambda_lo=>λ_lo, :lambda_hi=>λ_hi) )
