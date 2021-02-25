@@ -84,22 +84,23 @@ function make_clean_line_list_from_tellurics(line_list::DataFrame, neid_data::DT
    if hasproperty(line_list,:lambda_lo) &&  hasproperty(line_list,:lambda_hi)
       line_list_to_search_for_tellurics = copy(line_list)
    else
-      line_list_to_search_for_tellurics = add_line_boundaries_to_line_list(line_list_to_search_for_tellurics, Δv_to_avoid_tellurics=Δv_to_avoid_tellurics, v_center_to_avoid_tellurics=v_center_to_avoid_tellurics )
+      line_list_to_search_for_tellurics = RvSpectMLBase.add_line_boundaries_to_line_list(line_list, Δv_to_avoid_tellurics=Δv_to_avoid_tellurics, v_center_to_avoid_tellurics=v_center_to_avoid_tellurics )
    end
    #chunk_list_timeseries = RvSpectMLBase.make_chunk_list_timeseries_around_lines(neid_data,line_list_to_search_for_tellurics)
 
    if !hasproperty(line_list, :order)
-       order_info = get_order_info(all_spectra, orders_to_use=orders_to_use)
+       order_info = get_order_info(neid_data) # , orders_to_use=orders_to_use)
        #println("# order_info contains: ", names(order_info))
        #println("# line_list_df contains: ", names(line_list_df))
-       line_list_df = RvSpectML.assign_lines_to_orders(line_list_df, order_info)
+       line_list_to_search_for_tellurics = assign_lines_to_orders(line_list_to_search_for_tellurics, order_info, Δv_to_avoid_tellurics=Δv_to_avoid_tellurics, v_center=v_center_to_avoid_tellurics )
    end
 
-   telluric_ranges = read_telluric_ranges(tellurics_filename)
+   telluric_ranges = read_telluric_ranges(tellurics_filename)   # already includes range due to BCs
    # TODO: Check sign convention for v_center_to_avoid_tellurics
-   #telluric_ranges.lambda_lo .*= calc_doppler_factor(v_center_to_avoid_tellurics) / calc_doppler_factor(Δv_to_avoid_tellurics)
-   #telluric_ranges.lambda_hi .*= calc_doppler_factor(v_center_to_avoid_tellurics) * calc_doppler_factor(Δv_to_avoid_tellurics)
+   # telluric_ranges.lambda_lo .*= calc_doppler_factor(v_center_to_avoid_tellurics) # / calc_doppler_factor(Δv_to_avoid_tellurics)
+   # telluric_ranges.lambda_hi .*= calc_doppler_factor(v_center_to_avoid_tellurics) # * calc_doppler_factor(Δv_to_avoid_tellurics)
 
+   #println("# make_clean_line_list_from_tellurics: λ_list_for_bad_cols_df /= calc_doppler_factor ")
    λ_list_for_bad_cols_df = make_λ_list_for_bad_columns(line_list_to_search_for_tellurics, neid_data)
    λ_list_for_bad_cols_df.lambda_lo .*= calc_doppler_factor(v_center_to_avoid_tellurics) / calc_doppler_factor(Δv_to_avoid_tellurics)
    λ_list_for_bad_cols_df.lambda_hi .*= calc_doppler_factor(v_center_to_avoid_tellurics) * calc_doppler_factor(Δv_to_avoid_tellurics)
