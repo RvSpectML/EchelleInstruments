@@ -15,7 +15,8 @@ max_order(::NEID2D) = 90
 =#
 # At KPNO
 min_order(::NEID2D) = 1
-max_order(::NEID2D) = 126
+#max_order(::NEID2D) = 126 # DRS 0.5
+max_order(::NEID2D) = 122 # DRS 0.6
 min_pixel_in_order(inst::NEID2D) = 1
 max_pixel_in_order(inst::NEID2D) = 9216
 
@@ -86,5 +87,7 @@ default_λmin = 3950.0  # Based on HD solar data from PSU, should generalize
 default_λmax = 9500.0  #
 =#
 # At KPNO
-default_λmin = 5040.04045429369  # Based on one FITS file, should generalize
-default_λmax = 9810.539033567005 # Based on one FITS file, should generalize
+#default_λmin = 5040.04045429369  # Based on one FITS file, should generalize
+#default_λmax = 9810.539033567005 # Based on one FITS file, should generalize
+default_λmin = 5145.0
+default_λmax = 9822.0

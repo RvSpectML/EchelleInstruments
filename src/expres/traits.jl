@@ -30,8 +30,11 @@ max_col_excalibur(inst::EXPRES2D, ord::Integer) = last(minmax_col_excalibur_avai
 import RvSpectMLBase: orders_to_use_default, min_col_default, max_col_default
 
 orders_to_use_default(::EXPRES2D) = 43:75    # Based on methods for inital RV described at http://exoplanets.astro.yale.edu/science/activity.php
-min_col_default(::EXPRES2D, ord::Integer) = 770
+min_col_default(::EXPRES2D, ord::Integer) = 770   # Seems like they should be good
 max_col_default(::EXPRES2D, ord::Integer) = 6650
+#min_col_default(::EXPRES2D, ord::Integer) = 1825   # Narrower range for DCPCA
+#max_col_default(::EXPRES2D, ord::Integer) = 7000
+
 
 
 import RvSpectMLBase: get_pixel_range
