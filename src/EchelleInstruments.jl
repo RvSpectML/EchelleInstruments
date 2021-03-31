@@ -10,6 +10,8 @@ using RvSpectMLBase
 using DataFrames, CSV, Query
 using FITSIO
 
+import RvSpectMLBase: default_ccf_mask_v_width  # So this function can be overriden for each instrument
+
 include("common.jl")   # Mostly trait functions to be specialized by instruments
 #function get_inst_module end
 
