@@ -45,7 +45,7 @@ function make_manifest(data_path::String ; max_spectra_to_use::Int = 1000 )
 end
 
 """Create Dict containing filename and default metadata from file."""
-function read_metadata(fn::String)
+function read_metadata(fn::Union{String,FITS})
     fields_to_save = metadata_symbols_default(NEID2D())
     fields_str_to_save = metadata_strings_default(NEID2D())
     dict = read_metadata_from_fits(fn,fields=fields_to_save,fields_str=fields_str_to_save)
@@ -88,7 +88,7 @@ function read_data(f::FITS, metadata::Dict{Symbol,Any} )
 end
 
 
-function read_data(f::FITS, metadata::Dict{Symbol,Any}, orders_to_read::AbstractRange )
+function read_data(f::FITS, metadata::Dict{Symbol,Any}, orders_to_read::AR ) where  { AR<:AbstractRange }
     @assert length(f) >= 2
     @assert all(map(i->typeof(f[i]) <: FITSIO.ImageHDU,2:length(f)))
     img_idx = Dict(map(i->first(read_key(f[i],"EXTNAME"))=>i,2:length(f)))
@@ -118,6 +118,18 @@ function read_data(dfr::DataFrameRow{DataFrame,DataFrames.Index})
     read_data(fn,metadata)
 end
 
+function read_data(fn::String, orders_to_read::AR ) where  { AR<:AbstractRange }
+    f = FITS(fn)
+    metadata = read_metadata(f)
+    read_data(f,metadata, orders_to_read)
+end
+
+function read_data(dfr::DataFrameRow{DataFrame,DataFrames.Index}, orders_to_read::AR ) where  { AR<:AbstractRange }
+    fn = dfr.Filename
+    metadata = Dict(zip(keys(dfr),values(dfr)))
+    read_data(fn,metadata, orders_to_read)
+end
+
 function apply_barycentric_correction!(λ::AbstractArray{T,1}, z::Real) where { T<:Real }
 
 end
@@ -136,4 +148,28 @@ end
 TODO: Figure out mapping between these orders and what's stored in the FITS file before using. """
 function read_solar_normalization(fn::String = joinpath(pkgdir(EchelleInstruments),"data","neid","NEID_normalization_function.csv") )
     CSV.read(fn, DataFrame)
+end
+
+""" Read calibrator data """
+function read_cal_data(f::FITS, metadata::Dict{Symbol,Any}, orders_to_read::AR )  where { AR<:AbstractRange  }
+    @assert length(f) >= 2
+    @assert all(map(i->typeof(f[i]) <: FITSIO.ImageHDU,2:length(f)))
+    img_idx = Dict(map(i->first(read_key(f[i],"EXTNAME"))=>i,2:length(f)))
+    λ, flux, var  = FITSIO.read(f[img_idx["CALWAVE"]],:,orders_to_read), FITSIO.read(f[img_idx["CALFLUX"]],:,orders_to_read), FITSIO.read(f[img_idx["CALVAR"]],:,orders_to_read)
+    metadata[:normalization] = :raw
+    spectrum = Spectra2DBasic(λ, flux, var, NEID2D(), metadata=metadata)
+    apply_doppler_boost!(spectrum,metadata)
+    return spectrum
+end
+
+function read_cal_data(fn::String, metadata::Dict{Symbol,Any} )
+    f = FITS(fn)
+    read_cal_data(f, metadata)
+end
+
+function read_cal_data(fn::String)
+    f = FITS(fn)
+    hdr = FITSIO.read_header(f[1])
+    metadata = Dict(zip(map(k->Symbol(k),hdr.keys),hdr.values))
+    read_cal_data(f, metadata)
 end
