@@ -1,9 +1,8 @@
 """
-   Traits for the NEID spectrograph.
+   Traits for the NEID spectrograph (data products from DRP v0.6).
    https://neid.psu.edu/
 Author: Eric Ford and collaborators
 Created: August 2020
-Updated: March 2021 for DRP v0.7
 """
 
 """ Delegates loading of code specifying types essential to the package.  """
