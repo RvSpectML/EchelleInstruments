@@ -25,7 +25,17 @@ min_pixel(::NEID1D) = 1
 max_pixel(::NEID1D) = (max_order(NEID1D())-min_order(NEID1D())+1)*9216 # TODO: Update once know size of NEID's 1d extracted spectra
 
 
-bad_col_ranges(inst::NEID2D, ord::Int) = [439:449, 1934:1943, 6714:6714]
+#bad_col_ranges(inst::NEID2D, ord::Int) = [439:449, 1934:1943, 6714:6714] # DRP v0.6
+function bad_col_ranges(inst::NEID2D, ord::Int)   # DRP v0.7
+    if ord == 1      return [1:1712, 1938:1938]
+    elseif ord == 2  return [1:866, 1938:1938]
+    elseif ord == 3  return [1:152, 438:450, 1938:1938]
+    elseif 4 <= ord <= 44   return [438:450, 1938:1938]
+    elseif 45 <= ord <= 46   return [438:450, 1938:1938, 6714:6714]
+    elseif 47 <= ord <= 122   return [438:450, 1932:1946, 6714:6714]
+    end
+end
+
 
 import RvSpectMLBase: orders_to_use_default, min_col_default, max_col_default
 
@@ -51,7 +61,7 @@ function min_col_default(::NEID2D, ord::Integer)
 end
 #max_col_default(::NEID2D, ord::Integer) = 8429  # DRS 0.5
 #max_col_default(::NEID2D, ord::Integer) = 6214  # DRS 0.6, avoiding NaN in col 6215
-max_col_default(::NEID2D, ord::Integer) = 9215  # DRS 0.6
+max_col_default(::NEID2D, ord::Integer) = 9215  # DRS 0.6, 0.7
 
 import RvSpectMLBase: get_pixel_range
 function get_pixel_range(inst::NEID2D, ord::Integer)
@@ -90,5 +100,7 @@ default_λmax = 9500.0  #
 # At KPNO
 #default_λmin = 5040.04045429369  # Based on one FITS file, should generalize
 #default_λmax = 9810.539033567005 # Based on one FITS file, should generalize
-default_λmin = 5145.0
-default_λmax = 9822.0
+# default_λmin = 5145.0 # DRP v0.6
+# default_λmax = 9822.0 # DRP v0.6
+default_λmin = 3571.0 # DRP v0.7 rounded down
+default_λmax = 11048.0 # DRP v0.7
