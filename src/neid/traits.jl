@@ -15,9 +15,12 @@ min_order(::NEID2D) = 1
 max_order(::NEID2D) = 90
 =#
 # At KPNO
-min_order(::NEID2D) = 1
+#min_order(::NEID2D) = 1
+min_order(::NEID2D) = 4  # DRP 0.7
 #max_order(::NEID2D) = 126 # DRS 0.5
-max_order(::NEID2D) = 122 # DRS 0.6
+#max_order(::NEID2D) = 122 # DRS 0.6
+max_order(::NEID2D) = 118 # DRS 0.7
+
 min_pixel_in_order(inst::NEID2D) = 1
 max_pixel_in_order(inst::NEID2D) = 9216
 
