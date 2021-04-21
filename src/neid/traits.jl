@@ -28,6 +28,7 @@ min_pixel(::NEID1D) = 1
 max_pixel(::NEID1D) = (max_order(NEID1D())-min_order(NEID1D())+1)*9216 # TODO: Update once know size of NEID's 1d extracted spectra
 
 
+import RvSpectMLBase: bad_col_ranges
 #bad_col_ranges(inst::NEID2D, ord::Int) = [439:449, 1934:1943, 6714:6714] # DRP v0.6
 function bad_col_ranges(inst::NEID2D, ord::Int)   # DRP v0.7
     if ord == 1      return [1:1712, 1938:1938]
@@ -65,6 +66,8 @@ end
 #max_col_default(::NEID2D, ord::Integer) = 8429  # DRS 0.5
 #max_col_default(::NEID2D, ord::Integer) = 6214  # DRS 0.6, avoiding NaN in col 6215
 max_col_default(::NEID2D, ord::Integer) = 9215  # DRS 0.6, 0.7
+min_col_default(::NEID2D, ord::Integer) = 1500  # Avoid where continuum normalization effected by edges/scattered light
+max_col_default(::NEID2D, ord::Integer) = 8000  # Avoid where continuum normalization effected by edges/scattered light
 
 import RvSpectMLBase: get_pixel_range
 function get_pixel_range(inst::NEID2D, ord::Integer)
