@@ -55,6 +55,7 @@ max_col_default(::NEID2D, ord::Integer) = 9216 - (min_col_default(NEID2D(),ord)-
 #orders_to_use_default(::NEID2D) = 56:111 # everything plaussibly usable as of DRS 0.6
 #orders_to_use_default(::NEID2D) = 60:90  # relatively safe
 orders_to_use_default(::NEID2D) = 56:98   # avoid worst of tellurics
+#=
 function min_col_default(::NEID2D, ord::Integer)
 #    return 1445 +500 # DRS 0.6, avoiding NaN in cols 1435-1444
     if ord == 55
@@ -63,6 +64,7 @@ function min_col_default(::NEID2D, ord::Integer)
         return 500
     end
 end
+=#
 #max_col_default(::NEID2D, ord::Integer) = 8429  # DRS 0.5
 #max_col_default(::NEID2D, ord::Integer) = 6214  # DRS 0.6, avoiding NaN in col 6215
 #max_col_default(::NEID2D, ord::Integer) = 9215  # DRS 0.6, 0.7
