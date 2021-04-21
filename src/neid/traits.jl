@@ -65,7 +65,7 @@ function min_col_default(::NEID2D, ord::Integer)
 end
 #max_col_default(::NEID2D, ord::Integer) = 8429  # DRS 0.5
 #max_col_default(::NEID2D, ord::Integer) = 6214  # DRS 0.6, avoiding NaN in col 6215
-max_col_default(::NEID2D, ord::Integer) = 9215  # DRS 0.6, 0.7
+#max_col_default(::NEID2D, ord::Integer) = 9215  # DRS 0.6, 0.7
 min_col_default(::NEID2D, ord::Integer) = 1500  # Avoid where continuum normalization effected by edges/scattered light
 max_col_default(::NEID2D, ord::Integer) = 8000  # Avoid where continuum normalization effected by edges/scattered light
 
