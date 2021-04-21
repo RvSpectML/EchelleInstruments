@@ -137,3 +137,17 @@ function calc_complement_index_ranges(idx_all::AR1, idx_bad::AA1 ) where { AR1 <
     end
     return idx_out
 end
+
+
+function make_bad_pixel_list_into_ranges(x::V) where { T<:Integer, V<:AbstractVector{T} }
+    if length(x) == 0
+        return []
+    elseif length(x) == 1
+        return [x[1]:x[1]]
+    else
+        tmp = findall(x[2:end].-x[1:end-1].!=1)
+        pix_start = vcat( x[1], x[tmp.+1] )
+        pix_stop = vcat( x[tmp], x[length(x)] )
+        return map(p->p[1]:p[2], zip(pix_start,pix_stop) )
+    end
+end

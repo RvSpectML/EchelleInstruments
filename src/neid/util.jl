@@ -51,6 +51,19 @@ function make_good_orders_pixels_df(neid_data::DT ; orders::A4 = orders_to_use_d
                 T1<:Real, A1<:AbstractArray{T1}, T2<:Real, A2<:AbstractArray{T2}, T3<:Real, A3<:AbstractArray{T3},
                  IT<:NEID.AnyNEID, ST<:Spectra2DBasic{T1,T2,T3,A1,A2,A3,IT}, DT<:AbstractArray{ST,1},
                  T4 <: Integer, A4<:AbstractArray{T4} }
+    @warn "Deprecated use make_good_orders_pixels_df(inst) instead."
+    df = DataFrame(order=Int[],pixels=UnitRange[])
+    for ord in orders
+        pixel_array = EchelleInstruments.calc_complement_index_ranges(get_pixel_range(NEID2D(),ord),EchelleInstruments.NEID.bad_col_ranges(NEID2D(),ord))
+        order_array = repeat([ord],length(pixel_array))
+        df_tmp = DataFrame(:order=>order_array,:pixels=>pixel_array)
+        append!(df,df_tmp)
+    end
+    return df
+end
+
+function make_good_orders_pixels_df(inst::IT ; orders::A4 = orders_to_use_default(inst) ) where {
+                 IT<:NEID.AnyNEID, T4 <: Integer, A4<:AbstractArray{T4} }
     df = DataFrame(order=Int[],pixels=UnitRange[])
     for ord in orders
         pixel_array = EchelleInstruments.calc_complement_index_ranges(get_pixel_range(NEID2D(),ord),EchelleInstruments.NEID.bad_col_ranges(NEID2D(),ord))
