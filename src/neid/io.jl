@@ -22,7 +22,8 @@ function make_manifest(data_path::String ; max_spectra_to_use::Int = 1000 )
     #df_files = DataFrame(read_metadata(spectra_filelist[1]))
     df_files = DataFrame(read_metadata(df_filenames.Filename[1]))
     keys = propertynames(df_files)
-    allowmissing!(df_files, keys[map(k->k∉[:Filename, :bjd, :target],keys)] )
+    allowmissing!(df_files, keys[map(k->k∉[:Filename, :bjd, :target, :airmass],keys)] )
+    #println("df_files = ", df_files)
 
     #if length(spectra_filelist) >= 2
     if length(df_filenames.Filename) >= 2
@@ -56,10 +57,14 @@ function read_metadata(fn::Union{String,FITS})
     dict = read_metadata_from_fits(fn,fields=fields_to_save,fields_str=fields_str_to_save)
     check_metadata_fields_expected_present(dict,fields_to_save)
     dict[:Filename] = fn
+    if haskey(dict,:airmass) && typeof(dict[:airmass]) == String
+       dict[:airmass] = parse(Float64,dict[:airmass])
+    end
     return dict
 end
 
 function add_metadata_from_fits!(df::DataFrame, fn::String)
+    println("# Reading metadata from ", fn)
     metadata_keep = read_metadata(fn)
     #if metadata_keep[:target] != "Solar" return df end
     calibration_target_substrings = ["Etalon","LFC","ThArS","LDLS","FlatBB"]
@@ -78,6 +83,10 @@ function add_metadata_from_fits!(df::DataFrame, fn::String)
         if (eltype(df[!,k]) <: Union{Real,Union{<:Real,Missing}}) && !(typeof(metadata_keep[k]) <: Union{Real,Union{<:Real,Missing}})
             metadata_keep[k] = missing
         end
+    end
+    #println("metadata_keep = ", metadata_keep)
+    if haskey(metadata_keep,:airmass) && typeof(metadata_keep[:airmass]) == String
+       metadata_keep[:airmass] = parse(Float64,metadata_keep[:airmass])
     end
     push!(df, metadata_keep)
     return df
