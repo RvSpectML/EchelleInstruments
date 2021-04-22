@@ -113,3 +113,41 @@ function make_ranges_without_tellurics(telluric_list::DataFrame; min_Δv::Real =
     return df_nice_sized_chunks
     #return df_large_chunks
 end
+
+function calc_complement_index_ranges(idx_all::AR1, idx_bad::AA1 ) where { AR1 <: AbstractRange, AR2 <: AbstractRange, AA1 <: AbstractArray{AR2} }
+    function is_in_any_range(x::eltype(AR1), r::eltype(AA1) )
+        any(map(b->b.start<=x<=b.stop, idx_bad))
+    end
+    is_not_in_any_range(x::eltype(AR1), r::eltype(AA1) ) = !is_in_any_range(x,r)
+    idx_out = Array{typeof(idx_all),1}()
+    start = 0
+    stop = 0
+    while stop < last(idx_all)
+        start = findnext(x->is_not_in_any_range(x,idx_bad), idx_all,stop+1)
+        if start == nothing
+            break
+        end
+        stop = findnext(x->is_in_any_range(x,idx_bad), idx_all, start)
+        if stop == nothing
+            stop = length(idx_all)
+        else
+            stop -= 1
+        end
+        push!(idx_out,idx_all[start]:idx_all[stop])
+    end
+    return idx_out
+end
+
+
+function make_bad_pixel_list_into_ranges(x::V) where { T<:Integer, V<:AbstractVector{T} }
+    if length(x) == 0
+        return []
+    elseif length(x) == 1
+        return [x[1]:x[1]]
+    else
+        tmp = findall(x[2:end].-x[1:end-1].!=1)
+        pix_start = vcat( x[1], x[tmp.+1] )
+        pix_stop = vcat( x[tmp], x[length(x)] )
+        return map(p->p[1]:p[2], zip(pix_start,pix_stop) )
+    end
+end

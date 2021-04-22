@@ -30,8 +30,11 @@ max_col_excalibur(inst::EXPRES2D, ord::Integer) = last(minmax_col_excalibur_avai
 import RvSpectMLBase: orders_to_use_default, min_col_default, max_col_default
 
 orders_to_use_default(::EXPRES2D) = 43:75    # Based on methods for inital RV described at http://exoplanets.astro.yale.edu/science/activity.php
-min_col_default(::EXPRES2D, ord::Integer) = 770
+min_col_default(::EXPRES2D, ord::Integer) = 770   # Seems like they should be good
 max_col_default(::EXPRES2D, ord::Integer) = 6650
+#min_col_default(::EXPRES2D, ord::Integer) = 1825   # Narrower range for DCPCA
+#max_col_default(::EXPRES2D, ord::Integer) = 7000
+
 
 
 import RvSpectMLBase: get_pixel_range
@@ -48,8 +51,8 @@ function get_pixel_range(inst::EXPRES2D, ord::Integer)
 end
 
 import RvSpectMLBase: metadata_symbols_default, metadata_strings_default
-metadata_symbols_default(::AnyEXPRES) = Symbol[:midpoint, :bjd, :target, :exposure_time, :airmass, :pwv, :moondist, :sundist, :snr_prelim]
-metadata_strings_default(::AnyEXPRES) = String["MIDPOINT", "BARYMJD", "OBJECT", "AEXPTIME", "AIRMASS", "PWV", "MOONDIST", "SUNDIST", "channel5_SNR"]
+metadata_symbols_default(::AnyEXPRES) = Symbol[:midpoint, :bjd, :target, :exposure_time, :airmass, :pwv, :moondist, :sundist, :snr_prelim, :expcount, :wavecal]
+metadata_strings_default(::AnyEXPRES) = String["MIDPOINT", "BARYMJD", "OBJECT", "AEXPTIME", "AIRMASS", "PWV", "MOONDIST", "SUNDIST", "channel5_SNR", "EXPCOUNT", "WAVE_CAL"]
 
 #metadata_hdu2_symbols_default(::AnyEXPRES) = Symbol[:S_indicator, :Hα_indicator, :Hα_width, :ccf_width, :σ_ccf_width, :bis_indicator]
 #metadata_hdu2_strings_default(::AnyEXPRES) = String["S-VALUE", "HALPHA", "HWIDTH", "CCFFWHM", "CCFFWHME", "BIS"]
