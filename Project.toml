@@ -1,7 +1,7 @@
 name = "EchelleInstruments"
 uuid = "533b6e3a-cbf4-4a92-8a96-bc27ebcb1598"
 authors = ["Eric Ford"]
-version = "0.2.2"
+version = "0.2.3"
 
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"

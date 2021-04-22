@@ -62,6 +62,12 @@ end
 function add_metadata_from_fits!(df::DataFrame, fn::String)
     metadata_keep = read_metadata(fn)
     #if metadata_keep[:target] != "Solar" return df end
+    calibration_target_substrings = ["Etalon","LFC","ThArS","LDLS","FlatBB"]
+
+   if any(map(ss->contains( metadata_keep[:target],ss),calibration_target_substrings)) 
+      return df
+   end
+
 
     for k in propertynames(df)
         if typeof(metadata_keep[k]) == Missing continue end
