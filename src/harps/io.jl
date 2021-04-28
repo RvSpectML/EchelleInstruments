@@ -7,7 +7,7 @@ Created: April 2021
 
 """Create Dataframe containing filenames and key data for all files YYYY-MM-DDThh:mm:ss.mss (year-month-day T hour:minute:second:milisecond in directory"""
 function make_manifest(data_path::String ; max_spectra_to_use::Int = 1000 )
-    df_filenames = EchelleInstruments.make_manifest(data_path,r"^2010-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}$")
+    df_filenames = EchelleInstruments.make_manifest(data_path,r"^20\d{2}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}$")
 
     df_files = DataFrame(read_metadata(joinpath(df_filenames.Filename[1],"e2ds.fits")))
     keys = propertynames(df_files)
