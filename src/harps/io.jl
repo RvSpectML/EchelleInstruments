@@ -17,6 +17,9 @@ function make_manifest(data_path::String ; max_spectra_to_use::Int = 1000 )
         map(fn->add_metadata_from_fits!(df_files,joinpath(fn,"e2ds.fits")),df_filenames.Filename[2:end])
     end
 
+    binaryRV = CSV.read(joinpath(data_path,"binaryRV.csv"), DataFrame, header=["binaryRV"])
+    df_files = hcat(df_files,binaryRV)
+
     df_files
 
 end
