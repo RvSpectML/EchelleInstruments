@@ -38,6 +38,13 @@ import .HARPSN: HARPSN1D, HARPSN2D, AnyHARPSN #, get_inst_module
 #import .HARPSN: get_inst_module, filter_line_list, find_worst_telluric_in_each_chunk
 =#
 
+include("harps/harps.jl")
+export HARPS, HARPS1D, HARPS2D, AnyHARPS
+import .HARPS: HARPS1D, HARPS2D, AnyHARPS #, get_inst_module
+#=
+#import .HARPSN: get_inst_module, filter_line_list, find_worst_telluric_in_each_chunk
+=#
+
 include("hpf/hpf.jl")
 export HPF, HPF1D, HPF2D, AnyHPF
 import .HPF: HPF1D, HPF2D, AnyHPF #, get_inst_module

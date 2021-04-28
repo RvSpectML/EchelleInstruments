@@ -9,12 +9,12 @@ Created: April 2021
 function make_manifest(data_path::String ; max_spectra_to_use::Int = 1000 )
     df_filenames = EchelleInstruments.make_manifest(data_path,r"^2010-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}$")
 
-    df_files = DataFrame(read_metadata(df_filenames.Filename[1]*"/e2ds.fits"))
+    df_files = DataFrame(read_metadata(joinpath(df_filenames.Filename[1],"e2ds.fits")))
     keys = propertynames(df_files)
     allowmissing!(df_files, keys[map(k->k∉[:Filename, :bjd, :target, :airmass],keys)] )
 
     if length(df_filenames.Filename) >= 2
-        map(fn->add_metadata_from_fits!(df_files,fn*"/e2ds.fits"),df_filenames.Filename[2:end])
+        map(fn->add_metadata_from_fits!(df_files,joinpath(fn,"e2ds.fits")),df_filenames.Filename[2:end])
     end
 
     df_files
@@ -31,6 +31,7 @@ function read_metadata(fn::Union{String,FITS})
     if haskey(dict,:airmass) && typeof(dict[:airmass]) == String
        dict[:airmass] = parse(Float64,dict[:airmass])
     end
+    dict[:wfile] = joinpath(fn[1:end-33],"waves",dict[:wfile])
     return dict
 end
 
@@ -58,6 +59,9 @@ function add_metadata_from_fits!(df::DataFrame, fn::String)
     if haskey(metadata_keep,:airmass) && typeof(metadata_keep[:airmass]) == String
        metadata_keep[:airmass] = parse(Float64,metadata_keep[:airmass])
     end
+
+    metadata_keep[:wfile] = joinpath(fn[1:end-33],"waves",metadata_keep[:wfile])
+
     push!(df, metadata_keep)
     return df
 end
@@ -69,9 +73,8 @@ end
     Note:HARPS wavelengths are stored in Float-32 format, which reduces wavelength precision.
     This function restores that precision using a smooth polynomial fit """
 function read_λ(fn::String)
-    global harps_data_path
-    λ_fits = FITS(joinpath(harps_data_path,"waves",fn))
-    λ_original = convert(Array{Float64,2},FITSIO.read(λ_f[1]))
+    λ_fits = FITS(fn)
+    λ_original = convert(Array{Float64,2},FITSIO.read(λ_fits[1]))
     nx, norder = size(λ_original)
     λ_new = zeros(nx,norder)
     for i in 1:norder
@@ -82,9 +85,8 @@ function read_λ(fn::String)
 end
 
 function read_λ(fn::String, orders_to_read::AR ) where  { AR<:AbstractRange }
-    global harps_data_path
-    λ_fits = FITS(joinpath(harps_data_path,"waves",fn))
-    λ_original = convert(Array{Float64,2},FITSIO.read(λ_f[1],:,orders_to_read))
+    λ_fits = FITS(fn)
+    λ_original = convert(Array{Float64,2},FITSIO.read(λ_fits[1],:,orders_to_read))
     nx, norder = size(λ_original)
     λ_new = zeros(nx,norder)
     for i in 1:norder
@@ -98,8 +100,8 @@ end
 function read_data   end
 
 function read_data(f::FITS, metadata::Dict{Symbol,Any} )
-    @assert length(f) >= 2
-    @assert all(map(i->typeof(f[i]) <: FITSIO.ImageHDU,2:length(f)))
+    @assert length(f) >= 1
+    #@assert all(map(i->typeof(f[i]) <: FITSIO.ImageHDU,2:length(f)))
     λ = read_λ(metadata[:wfile])
     flux = FITSIO.read(f[1])
     var = NaNMath.sqrt.(flux)
@@ -111,8 +113,8 @@ end
 
 
 function read_data(f::FITS, metadata::Dict{Symbol,Any}, orders_to_read::AR ) where  { AR<:AbstractRange }
-    @assert length(f) >= 2
-    @assert all(map(i->typeof(f[i]) <: FITSIO.ImageHDU,2:length(f)))
+    @assert length(f) >= 1
+    #@assert all(map(i->typeof(f[i]) <: FITSIO.ImageHDU,2:length(f)))
     λ = read_λ(metadata[:wfile], orders_to_read)
     flux = FITSIO.read(f[1],:,orders_to_read)
     var = NaNMath.sqrt.(flux)
