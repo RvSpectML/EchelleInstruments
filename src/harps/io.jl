@@ -70,7 +70,7 @@ end
     This function restores that precision using a smooth polynomial fit """
 function read_λ(fn::String)
     global harps_data_path
-    λ_fits = FITS(harps_data_path*"/waves/"*fn)
+    λ_fits = FITS(joinpath(harps_data_path,"waves",fn))
     λ_original = convert(Array{Float64,2},FITSIO.read(λ_f[1]))
     nx, norder = size(λ_original)
     λ_new = zeros(nx,norder)
@@ -83,7 +83,7 @@ end
 
 function read_λ(fn::String, orders_to_read::AR ) where  { AR<:AbstractRange }
     global harps_data_path
-    λ_fits = FITS(harps_data_path*"/waves/"*fn)
+    λ_fits = FITS(joinpath(harps_data_path,"waves",fn))
     λ_original = convert(Array{Float64,2},FITSIO.read(λ_f[1],:,orders_to_read))
     nx, norder = size(λ_original)
     λ_new = zeros(nx,norder)
