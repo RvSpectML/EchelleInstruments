@@ -19,9 +19,9 @@ function make_manifest(data_path::String ; max_spectra_to_use::Int = 1000 )
 
     RV_data = CSV.read(joinpath(data_path,"harpn_sun_release_timeseries_2015-2018.csv"), DataFrame)
 
-    # berv = RV_data[:, [:berv]][1:3, :]
-    berv_bary_to_helio = RV_data[:, [:berv_bary_to_helio]][1:3, :]
-    rv_diff_extinction = RV_data[:, [:rv_diff_extinction]][1:3, :]
+    # berv = RV_data[:, [:berv]]
+    berv_bary_to_helio = RV_data[:, [:berv_bary_to_helio]] .* -1.0
+    rv_diff_extinction = RV_data[:, [:rv_diff_extinction]] .* -1.0
 
     df_files = hcat(df_files, berv_bary_to_helio, rv_diff_extinction)
     append!(keys,[:ssb_rv, :diff_ext_rv])
