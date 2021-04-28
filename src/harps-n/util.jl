@@ -1,4 +1,4 @@
-function filter_line_list(df::DataFrame, inst::IT ; λmin::Real = default_λmin, λmax::Real = default_λmax ) where { IT<:HARPS.AnyHARPS }
+function filter_line_list(df::DataFrame, inst::IT ; λmin::Real = default_λmin, λmax::Real = default_λmax ) where { IT<:HARPSN.AnyHARPSN }
    df |> @filter(λmin <= _.lambda <= λmax) |>
     #    @filter( _.lambda < 6000.0 ) |>                       # Avoid tellurics at redder wavelengths
     #    @filter( _.lambda >6157 || _.lambda < 6155  ) |>   # Avoid "line" w/ large variability
@@ -21,26 +21,25 @@ function read_telluric_ranges(fn::String)
 end
 
 
-
-function make_λ_list_for_bad_columns(line_list::DataFrame, harps_data::DT )  where {
+function make_λ_list_for_bad_columns(line_list::DataFrame, harpsn_data::DT )  where {
             T1<:Real, A1<:AbstractArray{T1}, T2<:Real, A2<:AbstractArray{T2}, T3<:Real, A3<:AbstractArray{T3},
-             IT<:HARPS.AnyHARPS, ST<:Spectra2DBasic{T1,T2,T3,A1,A2,A3,IT}, DT<:AbstractArray{ST,1} }
-    order_list = 1:size(first(harps_data).λ,2)
+             IT<:HARPSN.AnyHARPSN, ST<:Spectra2DBasic{T1,T2,T3,A1,A2,A3,IT}, DT<:AbstractArray{ST,1} }
+    order_list = 1:size(first(harpsn_data).λ,2)
     df_bad_col_λs = DataFrame(:order=>Int[], :lambda_lo=>Float64[], :lambda_hi=>Float64[])
     for order in order_list
-        λ_extrema = NaNMath.extrema(first(harps_data).λ[:,order])
+        λ_extrema = NaNMath.extrema(first(harpsn_data).λ[:,order])
         if isnan(first(λ_extrema)) ||  isnan(last(λ_extrema))   continue   end
-        for bcr in bad_col_ranges(HARPS2D(), order)
+        for bcr in bad_col_ranges(HARPSN2D(), order)
             pixlo = first(bcr)
             pixhi = pixlo + 1
-            if pixhi > size(first(harps_data).λ,1)
+            if pixhi > size(first(harpsn_data).λ,1)
                 pixhi -= 1
                 pixlo -= 1
             end
-            doppler_factors = map(obsid-> haskey(harps_data[obsid].metadata,:doppler_factor) ? harps_data[obsid].metadata[:doppler_factor] : 1 , 1:length(harps_data))
-            Δλ_pixel = (first(harps_data).λ[pixhi,order] - first(harps_data).λ[pixlo,order]) * doppler_factors[1]
-            (λ_lo, λ_hi) = mapreduce(obsid->extrema(harps_data[obsid].λ[bcr,order]) .* doppler_factors[obsid],
-                               (a,b) -> (min(a[1],b[1]), max(a[2],b[2])),   1:length(harps_data) )
+            doppler_factors = map(obsid-> haskey(harpsn_data[obsid].metadata,:doppler_factor) ? harpsn_data[obsid].metadata[:doppler_factor] : 1 , 1:length(harpsn_data))
+            Δλ_pixel = (first(harpsn_data).λ[pixhi,order] - first(harpsn_data).λ[pixlo,order]) * doppler_factors[1]
+            (λ_lo, λ_hi) = mapreduce(obsid->extrema(harpsn_data[obsid].λ[bcr,order]) .* doppler_factors[obsid],
+                               (a,b) -> (min(a[1],b[1]), max(a[2],b[2])),   1:length(harpsn_data) )
             λ_lo -= Δλ_pixel/2
             λ_hi += Δλ_pixel/2
             push!(df_bad_col_λs, Dict(:order=>order, :lambda_lo=>λ_lo, :lambda_hi=>λ_hi) )
@@ -50,7 +49,7 @@ function make_λ_list_for_bad_columns(line_list::DataFrame, harps_data::DT )  wh
 end
 
 #=
-#old neid functions
+#old neid function
 
 function make_good_orders_pixels_df(neid_data::DT ; orders::A4 = orders_to_use_default(first(neid_data).inst) ) where {
                 T1<:Real, A1<:AbstractArray{T1}, T2<:Real, A2<:AbstractArray{T2}, T3<:Real, A3<:AbstractArray{T3},
@@ -101,11 +100,11 @@ end
 
 
 """
-   `make_clean_line_list_from_tellurics(line_list, harps_data; Δv_to_avoid_tellurics )`
+   `make_clean_line_list_from_tellurics(line_list, harpsn_data; Δv_to_avoid_tellurics )`
 Returns a new line list that excludes lines with telluric contamination.
 Inputs:
 - `line_list`:  Dataframe containing field lambda
-# - `harps_data`:  Array of spectra
+# - `harpsn_data`:  Array of spectra
 - `Δv_to_avoid_tellurics`:  in m/s
 - `v_center_to_avoid_tellurics` : in m/s
 - `tellurics_filename`:  filename with wavelength ranges affected by tellurics
@@ -113,9 +112,9 @@ Outputs:
 - `line_list_without_tellurics`:   DataFrame with fields: `lambda`, `weight`, `lambda_lo`, and `lambda_hi`.
 Warning: Currently, reads in a list of wavelength ranges with tellurics and this file was created based on tellurics metadata in EXPRES data for HR 101501.
 """
-function make_clean_line_list_from_tellurics(line_list::DataFrame, harps_data::DT ;
+function make_clean_line_list_from_tellurics(line_list::DataFrame, harpsn_data::DT ;
     Δv_to_avoid_tellurics::Real = 0.0, v_center_to_avoid_tellurics::Real = 0.0, tellurics_filename::String = joinpath(pkgdir(EchelleInstruments),"data/neid/telluric_ranges.csv")
-               ) where { T1<:Real, A1<:AbstractArray{T1}, T2<:Real, A2<:AbstractArray{T2}, T3<:Real, A3<:AbstractArray{T3}, IT<:HARPS.AnyHARPS, ST<:Spectra2DBasic{T1,T2,T3,A1,A2,A3,IT}, DT<:AbstractArray{ST,1} }
+               ) where { T1<:Real, A1<:AbstractArray{T1}, T2<:Real, A2<:AbstractArray{T2}, T3<:Real, A3<:AbstractArray{T3}, IT<:HARPSN.AnyHARPSN, ST<:Spectra2DBasic{T1,T2,T3,A1,A2,A3,IT}, DT<:AbstractArray{ST,1} }
    @assert 0.5*RvSpectMLBase.max_bc_earth_rotation <= Δv_to_avoid_tellurics <= 4*RvSpectMLBase.max_bc
 
    if hasproperty(line_list,:lambda_lo) &&  hasproperty(line_list,:lambda_hi)
@@ -123,10 +122,10 @@ function make_clean_line_list_from_tellurics(line_list::DataFrame, harps_data::D
    else
       line_list_to_search_for_tellurics = RvSpectMLBase.add_line_boundaries_to_line_list(line_list, Δv_to_avoid_tellurics=Δv_to_avoid_tellurics, v_center_to_avoid_tellurics=v_center_to_avoid_tellurics )
    end
-   #chunk_list_timeseries = RvSpectMLBase.make_chunk_list_timeseries_around_lines(harps_data,line_list_to_search_for_tellurics)
+   #chunk_list_timeseries = RvSpectMLBase.make_chunk_list_timeseries_around_lines(harpsn_data,line_list_to_search_for_tellurics)
 
    if !hasproperty(line_list, :order)
-       order_info = get_order_info(harps_data) # , orders_to_use=orders_to_use)
+       order_info = get_order_info(harpsn_data) # , orders_to_use=orders_to_use)
        #println("# order_info contains: ", names(order_info))
        #println("# line_list_df contains: ", names(line_list_df))
        line_list_to_search_for_tellurics = assign_lines_to_orders(line_list_to_search_for_tellurics, order_info, Δv_to_avoid_tellurics=Δv_to_avoid_tellurics, v_center=v_center_to_avoid_tellurics )
@@ -138,7 +137,7 @@ function make_clean_line_list_from_tellurics(line_list::DataFrame, harps_data::D
    # telluric_ranges.lambda_hi .*= calc_doppler_factor(v_center_to_avoid_tellurics) # * calc_doppler_factor(Δv_to_avoid_tellurics)
 
    #println("# make_clean_line_list_from_tellurics: λ_list_for_bad_cols_df /= calc_doppler_factor ")
-   λ_list_for_bad_cols_df = make_λ_list_for_bad_columns(line_list_to_search_for_tellurics, harps_data)
+   λ_list_for_bad_cols_df = make_λ_list_for_bad_columns(line_list_to_search_for_tellurics, harpsn_data)
    λ_list_for_bad_cols_df.lambda_lo .*= calc_doppler_factor(v_center_to_avoid_tellurics) / calc_doppler_factor(Δv_to_avoid_tellurics)
    λ_list_for_bad_cols_df.lambda_hi .*= calc_doppler_factor(v_center_to_avoid_tellurics) * calc_doppler_factor(Δv_to_avoid_tellurics)
 
@@ -160,7 +159,7 @@ function add_line_boundaries_to_line_list(line_list::DataFrame; Δv_to_avoid_tel
 end
 =#
 
-function choose_obs_idx_for_init_guess(df::DataFrame, inst::IT )  where { IT<:HARPS.AnyHARPS }
+function choose_obs_idx_for_init_guess(df::DataFrame, inst::IT )  where { IT<:HARPSN.AnyHARPSN }
    @assert size(df,1) >= 1
    return 1
    # TODO: Replace with something that estimates signal to noise

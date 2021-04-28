@@ -23,7 +23,7 @@ max_pixel(::HARPS1D) = 300000 # TODO: Update once know size of HARPS's 1d extrac
 import RvSpectMLBase: bad_col_ranges
 
 function bad_col_ranges(inst::HARPS2D, ord::Int)
-    #placeholder function to be updated if/when we decide certain pixels should be excluded from analysis
+    []#placeholder function to be updated if/when we decide certain pixels should be excluded from analysis
 end
 
 
