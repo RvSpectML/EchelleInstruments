@@ -30,10 +30,10 @@ end
 import RvSpectMLBase: orders_to_use_default, min_col_default, max_col_default
 
 
-orders_to_use_default(::HARPS2D) = 7:71   # avoid last order due to oxygen tellurics, first 7 due to poor SNR
+orders_to_use_default(::HARPS2D) = 1:72   # avoid last order due to oxygen tellurics, first 7 due to poor SNR
 
-min_col_default(::HARPS2D, ord::Integer) = 500  # Avoid where continuum normalization effected by edges/scattered light
-max_col_default(::HARPS2D, ord::Integer) = 3500  # Avoid where continuum normalization effected by edges/scattered light
+min_col_default(::HARPS2D, ord::Integer) = 300  # Avoid where continuum normalization effected by edges/scattered light
+max_col_default(::HARPS2D, ord::Integer) = 3800  # Avoid where continuum normalization effected by edges/scattered light
 
 import RvSpectMLBase: get_pixel_range
 function get_pixel_range(inst::HARPS2D, ord::Integer)

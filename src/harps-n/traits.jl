@@ -32,8 +32,8 @@ import RvSpectMLBase: orders_to_use_default, min_col_default, max_col_default
 
 orders_to_use_default(::HARPSN2D) = 1:69 
 
-min_col_default(::HARPSN2D, ord::Integer) = 500  # Avoid where continuum normalization effected by edges/scattered light
-max_col_default(::HARPSN2D, ord::Integer) = 3500  # Avoid where continuum normalization effected by edges/scattered light
+min_col_default(::HARPSN2D, ord::Integer) = 300  # Avoid where continuum normalization effected by edges/scattered light
+max_col_default(::HARPSN2D, ord::Integer) = 3800  # Avoid where continuum normalization effected by edges/scattered light
 
 import RvSpectMLBase: get_pixel_range
 function get_pixel_range(inst::HARPSN2D, ord::Integer)
