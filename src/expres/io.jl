@@ -7,14 +7,14 @@ Created: August 2020
 """
 
 """Create Dataframe containing filenames and key data for all files neid*.fits in directory"""
-function make_manifest(data_path::String)
+function make_manifest(data_path::String, fits_target_str::String)
     #=
     dir_filelist = readdir(data_path,join=true)
     idx_spectra = map(fn->occursin(r"^[a-zA-Z0-9]+_\d+[T\.]\d+\.fits$", last(split(fn,'/')) ),dir_filelist)
     spectra_filelist = dir_filelist[idx_spectra]
     @assert length(spectra_filelist) >= 1
     =#
-    df_filenames = make_manifest(data_path,r"^neidL1_\d+[T\.]\d+\.fits$")
+    df_filenames = make_manifest(data_path,Regex(fits_target_str))
     #df_files = DataFrame(read_metadata(spectra_filelist[1]))
     df_files = DataFrame(read_metadata(df_filenames.Filename[1]))
     keys = propertynames(df_files)
