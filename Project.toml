@@ -17,10 +17,10 @@ RvSpectMLBase = "c48404b2-35ea-40e7-ac7f-06a53de703d6"
 
 [compat]
 CSV = "0.7, 0.8"
-DataFrames = "0.21, 0.22, 1.1"
+DataFrames = "0.21, 0.22, 1.0, 1.1"
 FITSIO = "0.16"
 Interpolations = "0.12, 0.13"
-Missings = "0.4.5"
+Missings = "0.4.5, 1.0"
 NaNMath = "0.3.5"
 Polynomials = "1.2, 2"
 Query = "1"
