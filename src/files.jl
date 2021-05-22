@@ -20,10 +20,12 @@ function make_manifest(data_path::String, r::Regex; verbose::Bool = true)
       @error("Did not find any files in ", data_path ,".")
    end
 
-   #results = map(fn->match(r"(\d{8})[T_](\d{6})", last(split(fn,'/')) ), df_files.Filename)
-   #@assert all(map(r->length(r.captures),results).==2)
-   #df_files.date_str = map(r->String(r.captures[1]),results)
-   #df_files.time_str = map(r->String(r.captures[2]),results)
+   if match(r"(\d{8})[T_](\d{6})", last(split(df_files.Filename[1],'/')) ) != nothing
+      results = map(fn->match(r"(\d{8})[T_](\d{6})", last(split(fn,'/')) ), df_files.Filename)
+      @assert all(map(r->length(r.captures),results).==2)
+      df_files.date_str = map(r->String(r.captures[1]),results)
+      df_files.time_str = map(r->String(r.captures[2]),results)
+   end
 
    return df_files
 end

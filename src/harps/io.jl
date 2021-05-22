@@ -5,21 +5,27 @@ Author: Alex Wise and collaborators
 Created: April 2021
 """
 
-"""Create Dataframe containing filenames and key data for all files YYYY-MM-DDThh:mm:ss.mss (year-month-day T hour:minute:second:milisecond in directory"""
+"""
+Create Dataframe containing filenames and key data for all folders YYYY-MM-DDThh:mm:ss.mss (year-month-day T hour:minute:second:milisecond in directory
+We assume each YYYY-MM-DDThh:mm:ss.mss folder contains an e2ds.fits spectrum, which is the format for HARPS spectra from the ESO archive.
+"""
 function make_manifest(data_path::String ; max_spectra_to_use::Int = 1000 )
-    df_filenames = EchelleInstruments.make_manifest(data_path,r"^20\d{2}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}$")
+    df_foldernames = EchelleInstruments.make_manifest(data_path,r"^20\d{2}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}$")
 
-    df_files = DataFrame(read_metadata(joinpath(df_filenames.Filename[1],"e2ds.fits")))
+    #assume each HARPS spectrum is named e2ds.fits, as they come formatted from the ESO archive.
+    df_files = DataFrame(read_metadata(joinpath(df_foldernames.Filename[1],"e2ds.fits")))
     keys = propertynames(df_files)
     allowmissing!(df_files, keys[map(k->k∉[:Filename, :bjd, :target, :airmass],keys)] )
 
-    if length(df_filenames.Filename) >= 2
-        map(fn->add_metadata_from_fits!(df_files,joinpath(fn,"e2ds.fits")),df_filenames.Filename[2:end])
+    if length(df_foldernames.Filename) >= 2
+        map(fn->add_metadata_from_fits!(df_files,joinpath(fn,"e2ds.fits")),df_foldernames.Filename[2:end])
     end
-
-    if all(df_files[:,:target] .== "HD128621")
-        binaryRV = CSV.read(joinpath(data_path,"binaryRV.csv"), DataFrame, header=["binaryRV"])
-        df_files = hcat(df_files,binaryRV)
+    
+    #load binaryRV corrections
+    if all(df_files[:,:target] .== df_files[1,:target]) && isfile(joinpath(data_path,string(df_files[1,:target],"_binaryRV.csv")))
+        @info "HARPS.make_manifest found a binary RV correction file. Loading binary RVs."
+        binaryRV = CSV.read(joinpath(data_path,string(df_files[1,:target],"_binaryRV.csv")), DataFrame, header=["binaryRV"])
+        df_files = hcat(df_files,binaryRV) #TODO: edit binaryRV.csv to contain timestamps, check that the times match
     end
 
     df_files
@@ -109,7 +115,8 @@ function read_data(f::FITS, metadata::Dict{Symbol,Any} )
     #@assert all(map(i->typeof(f[i]) <: FITSIO.ImageHDU,2:length(f)))
     λ = read_λ(metadata[:wfile])
     flux = FITSIO.read(f[1])
-    var = NaNMath.sqrt.(flux)
+    # std = NaNMath.sqrt.(flux)
+    var = deepcopy(flux)
     metadata[:normalization] = :raw
     spectrum = Spectra2DBasic(λ, flux, var, HARPS2D(), metadata=metadata)
     apply_doppler_boost!(spectrum,metadata)
@@ -122,7 +129,8 @@ function read_data(f::FITS, metadata::Dict{Symbol,Any}, orders_to_read::AR ) whe
     #@assert all(map(i->typeof(f[i]) <: FITSIO.ImageHDU,2:length(f)))
     λ = read_λ(metadata[:wfile], orders_to_read)
     flux = FITSIO.read(f[1],:,orders_to_read)
-    var = NaNMath.sqrt.(flux)
+    # std = NaNMath.sqrt.(flux)
+    var = deepcopy(flux)
     metadata[:normalization] = :raw
     spectrum = Spectra2DBasic(λ, flux, var, HARPS2D(), metadata=metadata)
     apply_doppler_boost!(spectrum,metadata)

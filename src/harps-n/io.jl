@@ -5,8 +5,11 @@ Author: Alex Wise and collaborators
 Created: April 2021
 """
 
-"""Create Dataframe containing filenames and key data for all files YYYY-MM-DDThh:mm:ss.mss (year-month-day T hour:minute:second:milisecond in directory"""
-function make_manifest(data_path::String ; max_spectra_to_use::Int = 1000 )
+"""
+Create Dataframe containing filenames and key data for all files YYYY-MM-DDThh:mm:ss.mss (year-month-day T hour:minute:second:milisecond in directory
+timeseries_data_fn is the filename of the harps-n timeseries RV data (e.g. harpn_sun_release_timeseries_2015-2018.csv)
+"""
+function make_manifest(data_path::String ; timeseries_data_fn::String = "", max_spectra_to_use::Int = 1000)
     df_filenames = EchelleInstruments.make_manifest(data_path,r"^20\d{2}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}$")
 
     df_files = DataFrame(read_metadata(joinpath(df_filenames.Filename[1],"s2d.fits")))
@@ -17,15 +20,21 @@ function make_manifest(data_path::String ; max_spectra_to_use::Int = 1000 )
         map(fn->add_metadata_from_fits!(df_files,joinpath(fn,"s2d.fits")),df_filenames.Filename[2:end])
     end
 
-    RV_data = CSV.read(joinpath(data_path,"harpn_sun_release_timeseries_2015-2018.csv"), DataFrame)
-
-    # berv = RV_data[:, [:berv]]
-    berv_bary_to_helio = RV_data[:, [:berv_bary_to_helio]] .* -1.0
-    rv_diff_extinction = RV_data[:, [:rv_diff_extinction]] .* -1.0
-
-    df_files = hcat(df_files, berv_bary_to_helio, rv_diff_extinction)
-    append!(keys,[:ssb_rv, :diff_ext_rv])
-    rename!(df_files,keys)
+    #load rv data file for harps-n solar data
+    if timeseries_data_fn != ""
+        if isfile(joinpath(data_path,timeseries_data_fn))
+            RV_data = CSV.read(joinpath(data_path,timeseries_data_fn), DataFrame)
+            # berv = RV_data[:, [:berv]]
+            berv_bary_to_helio = RV_data[:, [:berv_bary_to_helio]] .* -1.0
+            rv_diff_extinction = RV_data[:, [:rv_diff_extinction]] .* -1.0
+            
+            df_files = hcat(df_files, berv_bary_to_helio, rv_diff_extinction)
+            append!(keys,[:ssb_rv, :diff_ext_rv])
+            rename!(df_files,keys)
+        else
+            @info string("HARPSN.make_manifest did not find a file at",joinpath(data_path,timeseries_data_fn),".\n RV data cannot be loaded.")
+        end
+    end
 
     df_files
 
@@ -81,7 +90,7 @@ function read_data(f::FITS, metadata::Dict{Symbol,Any} )
     @assert length(f) >= 2
     @assert all(map(i->typeof(f[i]) <: FITSIO.ImageHDU,2:length(f)))
     img_idx = Dict(map(i->first(read_key(f[i],"EXTNAME"))=>i,2:length(f)))
-    λ, flux, var  = FITSIO.read(f[img_idx["WAVEDATA_AIR_BARY"]]), FITSIO.read(f[img_idx["SCIDATA"]]), FITSIO.read(f[img_idx["ERRDATA"]])
+    λ, flux, var  = FITSIO.read(f[img_idx["WAVEDATA_AIR_BARY"]]), FITSIO.read(f[img_idx["SCIDATA"]]), FITSIO.read(f[img_idx["ERRDATA"]]).^2
     metadata[:normalization] = :raw
     spectrum = Spectra2DBasic(λ, flux, var, HARPSN2D(), metadata=metadata)
     apply_doppler_boost!(spectrum,metadata)
@@ -93,7 +102,7 @@ function read_data(f::FITS, metadata::Dict{Symbol,Any}, orders_to_read::AR ) whe
     @assert length(f) >= 2
     @assert all(map(i->typeof(f[i]) <: FITSIO.ImageHDU,2:length(f)))
     img_idx = Dict(map(i->first(read_key(f[i],"EXTNAME"))=>i,2:length(f)))
-    λ, flux, var  = FITSIO.read(f[img_idx["WAVEDATA_AIR_BARY"]]), FITSIO.read(f[img_idx["SCIDATA"]]), FITSIO.read(f[img_idx["ERRDATA"]])
+    λ, flux, var  = FITSIO.read(f[img_idx["WAVEDATA_AIR_BARY"]]), FITSIO.read(f[img_idx["SCIDATA"]]), FITSIO.read(f[img_idx["ERRDATA"]]).^2
     metadata[:normalization] = :raw
     spectrum = Spectra2DBasic(λ, flux, var, HARPSN2D(), metadata=metadata)
     apply_doppler_boost!(spectrum,metadata)

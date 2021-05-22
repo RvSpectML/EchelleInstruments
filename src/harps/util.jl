@@ -117,7 +117,7 @@ function make_clean_line_list_from_tellurics(line_list::DataFrame, harps_data::D
     Δv_to_avoid_tellurics::Real = 0.0, v_center_to_avoid_tellurics::Real = 0.0, tellurics_filename::String = joinpath(pkgdir(EchelleInstruments),"data/neid/telluric_ranges.csv")
                ) where { T1<:Real, A1<:AbstractArray{T1}, T2<:Real, A2<:AbstractArray{T2}, T3<:Real, A3<:AbstractArray{T3}, IT<:HARPS.AnyHARPS, ST<:Spectra2DBasic{T1,T2,T3,A1,A2,A3,IT}, DT<:AbstractArray{ST,1} }
    @assert 0.5*RvSpectMLBase.max_bc_earth_rotation <= Δv_to_avoid_tellurics <= 4*RvSpectMLBase.max_bc
-
+   @error "This function does not yet work for HARPS data." 
    if hasproperty(line_list,:lambda_lo) &&  hasproperty(line_list,:lambda_hi)
       line_list_to_search_for_tellurics = copy(line_list)
    else
