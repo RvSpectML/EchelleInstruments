@@ -13,7 +13,7 @@ module EXPRES
 using RvSpectMLBase
 import RvSpectMLBase: AbstractInstrument, AbstractInstrument1D, AbstractInstrument2D
 import ..EchelleInstruments
-import ..EchelleInstruments: read_manifest, read_metadata_from_fits, check_metadata_fields_expected_present
+import ..EchelleInstruments: read_manifest, read_metadata_from_fits, check_metadata_fields_expected_present, make_manifest
 #import ..EchelleInstruments: read_header
 import ..EchelleInstruments: default_Δv_to_avoid_tellurics
 

@@ -19,7 +19,7 @@ function make_manifest(data_path::String, fits_target_str::String)
     df_files = DataFrame(read_metadata(df_filenames.Filename[1]))
     keys = propertynames(df_files)
     allowmissing!(df_files, keys[map(k->k∉[:Filename, :bjd, :target],keys)] )
-    if length(df_filenames.Filename) >= 2
+    if size(df_filenames,1) >= 2
         map(fn->add_metadata_from_fits!(df_files,fn),df_filenames.Filename[2:end])
         #map(fn->add_metadata_from_fits!(df_files,fn),spectra_filelist[2:end])
     end
