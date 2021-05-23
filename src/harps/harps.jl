@@ -1,16 +1,15 @@
 """
-Delegates loading functions & traits for the HARPS-N spectrograph
+Delegates loading functions & traits for the HARPS spectrograph
 
 Author: Alex Wise and collaborators
 Created: April 2021
 """
 
 """
-Module providing types and traits and customized functions for the HARPS-N Spectrograph.
-- https://plone.unige.ch/HARPS-N/
+Module providing types and traits and customized functions for the HARPS Spectrograph.
+- https://www.eso.org/sci/facilities/lasilla/instruments/harps.html
 """
-
-module HARPSN
+module HARPS
 using RvSpectMLBase
 import RvSpectMLBase: AbstractInstrument, AbstractInstrument1D, AbstractInstrument2D
 import ..EchelleInstruments
@@ -24,16 +23,16 @@ using Interpolations
 using NaNMath, Missings
 using Polynomials
 
-""" Trait for 1D Extracted spectra from HARPS-N """
-struct HARPSN1D <: AbstractInstrument1D end
+""" Trait for 1D Extracted spectra from HARPS """
+struct HARPS1D <: AbstractInstrument1D end
 
-""" Trait for 2D Extracted spectra from HARPS-N """
-struct HARPSN2D <: AbstractInstrument2D end
+""" Trait for 2D Extracted spectra from HARPS """
+struct HARPS2D <: AbstractInstrument2D end
 
-""" Trait to specify any 1D or 2D Extracted spectra from HARPS-N """
-const AnyHARPSN = Union{HARPSN1D,HARPSN2D}
+""" Trait to specify any 1D or 2D Extracted spectra from HARPS """
+const AnyHARPS = Union{HARPS1D,HARPS2D}
 
-export HARPSN, HARPSN1D, HARPSN2D, AnyHARPSN
+export HARPS, HARPS1D, HARPS2D, AnyHARPS
 
 # traits.jl imports from RvSpectMBase on its own
 include("traits.jl")
