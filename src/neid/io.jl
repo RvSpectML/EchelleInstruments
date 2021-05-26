@@ -103,7 +103,7 @@ function read_data(f::FITS, metadata::Dict{Symbol,Any} )
     λ, flux, var  = FITSIO.read(f[img_idx["SCIWAVE"]]), FITSIO.read(f[img_idx["SCIFLUX"]]), FITSIO.read(f[img_idx["SCIVAR"]])
     metadata[:normalization] = :raw
     spectrum = Spectra2DBasic(λ, flux, var, NEID2D(), metadata=metadata)
-    #apply_doppler_boost!(spectrum,metadata)
+    apply_doppler_boost!(spectrum,metadata)
     return spectrum
 end
 
@@ -115,7 +115,7 @@ function read_data(f::FITS, metadata::Dict{Symbol,Any}, orders_to_read::AR ) whe
     λ, flux, var  = FITSIO.read(f[img_idx["SCIWAVE"]],:,orders_to_read), FITSIO.read(f[img_idx["SCIFLUX"]],:,orders_to_read), FITSIO.read(f[img_idx["SCIVAR"]],:,orders_to_read)
     metadata[:normalization] = :raw
     spectrum = Spectra2DBasic(λ, flux, var, NEID2D(), metadata=metadata)
-    #apply_doppler_boost!(spectrum,metadata)
+    apply_doppler_boost!(spectrum,metadata)
     return spectrum
 end
 
@@ -178,7 +178,7 @@ function read_cal_data(f::FITS, metadata::Dict{Symbol,Any}, orders_to_read::AR )
     λ, flux, var  = FITSIO.read(f[img_idx["CALWAVE"]],:,orders_to_read), FITSIO.read(f[img_idx["CALFLUX"]],:,orders_to_read), FITSIO.read(f[img_idx["CALVAR"]],:,orders_to_read)
     metadata[:normalization] = :raw
     spectrum = Spectra2DBasic(λ, flux, var, NEID2D(), metadata=metadata)
-    #apply_doppler_boost!(spectrum,metadata)
+    apply_doppler_boost!(spectrum,metadata)
     return spectrum
 end
 
