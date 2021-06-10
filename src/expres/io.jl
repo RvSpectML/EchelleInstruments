@@ -7,14 +7,14 @@ Created: August 2020
 """
 
 """Create Dataframe containing filenames and key data for all files neid*.fits in directory"""
-function make_manifest(data_path::String, fits_target_str::String)
+function make_manifest(data_path::String; fits_target_regex::Regex=r"^[a-zA-Z0-9]+_\d+[T\.]\d+\.fits$")
     #=
     dir_filelist = readdir(data_path,join=true)
     idx_spectra = map(fn->occursin(r"^[a-zA-Z0-9]+_\d+[T\.]\d+\.fits$", last(split(fn,'/')) ),dir_filelist)
     spectra_filelist = dir_filelist[idx_spectra]
     @assert length(spectra_filelist) >= 1
     =#
-    df_filenames = EchelleInstruments.make_manifest(data_path,Regex(fits_target_str))
+    df_filenames = EchelleInstruments.make_manifest(data_path, fits_target_regex)
     #df_files = DataFrame(read_metadata(spectra_filelist[1]))
     df_files = DataFrame(read_metadata(df_filenames.Filename[1]))
     keys = propertynames(df_files)
@@ -25,7 +25,7 @@ function make_manifest(data_path::String, fits_target_str::String)
     end
     # Date transition Based on EXPRES webpage
     df_files[!,:expres_epoch] = map(b-> b ? 5 : 4, df_files[!,:bjd] .> EXPRES.jd2mjd(datetime2julian(DateTime(2019,8,4))))
-    df_files
+    return df_files
 end
 
 "Return modified Julian date based on input Julian date"
