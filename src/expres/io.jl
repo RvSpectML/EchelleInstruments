@@ -7,14 +7,14 @@ Created: August 2020
 """
 
 """Create Dataframe containing filenames and key data for all files neid*.fits in directory"""
-function make_manifest(data_path::String, fits_target_str::String)
+function make_manifest(data_path::String; fits_target_regex::Regex=r"^[a-zA-Z0-9]+_\d+[T\.]\d+\.fits$")
     #=
     dir_filelist = readdir(data_path,join=true)
     idx_spectra = map(fn->occursin(r"^[a-zA-Z0-9]+_\d+[T\.]\d+\.fits$", last(split(fn,'/')) ),dir_filelist)
     spectra_filelist = dir_filelist[idx_spectra]
     @assert length(spectra_filelist) >= 1
     =#
-    df_filenames = EchelleInstruments.make_manifest(data_path,Regex(fits_target_str))
+    df_filenames = EchelleInstruments.make_manifest(data_path, fits_target_regex)
     #df_files = DataFrame(read_metadata(spectra_filelist[1]))
     df_files = DataFrame(read_metadata(df_filenames.Filename[1]))
     keys = propertynames(df_files)
@@ -25,7 +25,7 @@ function make_manifest(data_path::String, fits_target_str::String)
     end
     # Date transition Based on EXPRES webpage
     df_files[!,:expres_epoch] = map(b-> b ? 5 : 4, df_files[!,:bjd] .> EXPRES.jd2mjd(datetime2julian(DateTime(2019,8,4))))
-    df_files
+    return df_files
 end
 
 "Return modified Julian date based on input Julian date"
@@ -124,13 +124,21 @@ end
 """ Read EXPRES data from FITS file, and return in a Spectra2DBasic object."""
 function read_data   end
 
-function read_data(f::FITS, metadata::Dict{Symbol,Any}; normalization::Symbol = :raw, use_excalibur::Bool = true )
-    λ, spectrum, uncertainty = FITSIO.read(f["optimal"],"bary_wavelength"), FITSIO.read(f["optimal"],"spectrum"), FITSIO.read(f["optimal"],"uncertainty")
+function read_data(f::FITS, metadata::Dict{Symbol,Any}; normalization::Symbol = :raw, use_excalibur::Bool = true, return_λ_obs::Bool=false, return_excalibur_mask::Bool = false)
+    if return_λ_obs
+        λ, λ_obs, spectrum, uncertainty = FITSIO.read(f["optimal"],"bary_wavelength"), FITSIO.read(f["optimal"],"wavelength"), FITSIO.read(f["optimal"],"spectrum"), FITSIO.read(f["optimal"],"uncertainty")
+    else
+        λ, spectrum, uncertainty = FITSIO.read(f["optimal"],"bary_wavelength"), FITSIO.read(f["optimal"],"spectrum"), FITSIO.read(f["optimal"],"uncertainty")
+    end
     if use_excalibur
         # For pixels where a presumably more accurate wavelength is avaliable, overwrite it.
         excalibur_mask = haskey(metadata,:excalibur_mask) ? metadata[:excalibur_mask] : FITSIO.read(f["optimal"],"excalibur_mask")
         λ_excalibur = FITSIO.read(f["optimal"],"bary_excalibur")
         λ[excalibur_mask] .= λ_excalibur[excalibur_mask]
+        if return_λ_obs
+            λ_excalibur_obs = FITSIO.read(f["optimal"],"excalibur")
+            λ_obs[excalibur_mask] .= λ_excalibur_obs[excalibur_mask]
+        end
     end
     if normalization == :blaze
         flux = spectrum
@@ -154,7 +162,15 @@ function read_data(f::FITS, metadata::Dict{Symbol,Any}; normalization::Symbol = 
     else
         @error "# Reading data directly with normalization " * string(normalization) * " is not implemented."
     end
-    Spectra2DBasic(λ, flux, var, EXPRES2D(), metadata=metadata)
+    if return_λ_obs
+        if return_excalibur_mask
+            return Spectra2DExtended(λ, λ_obs, flux, var, EXPRES2D(), metadata=metadata), excalibur_mask
+        else
+            return Spectra2DExtended(λ, λ_obs, flux, var, EXPRES2D(), metadata=metadata)
+        end
+    else
+        return Spectra2DBasic(λ, flux, var, EXPRES2D(), metadata=metadata)
+    end
 end
 
 function read_data(fn::String, metadata = Dict{Symbol,Any}();
@@ -162,7 +178,7 @@ function read_data(fn::String, metadata = Dict{Symbol,Any}();
                         store_min_data::Bool = false, store_blaze::Bool = !store_min_data,
                         store_continuum::Bool = !store_min_data, store_tellurics::Bool = !store_min_data,
                         store_pixel_mask::Bool = !store_min_data, store_excalibur_mask::Bool = use_excalibur,
-                        store_all_metadata::Bool = !store_min_data )
+                        store_all_metadata::Bool = !store_min_data, kwargs...)
     # println("# Reading data from ", fn)
     f = FITS(fn)
     if store_all_metadata || isempty(metadata)
@@ -191,7 +207,7 @@ function read_data(fn::String, metadata = Dict{Symbol,Any}();
     if store_excalibur_mask
         metadata_combo[:excalibur_mask] = FITSIO.read(f["optimal"],"excalibur_mask")
     end
-    read_data(f,metadata_combo, normalization=normalization, use_excalibur=use_excalibur)
+    read_data(f,metadata_combo; normalization=normalization, use_excalibur=use_excalibur, kwargs...)
 end
 
 """ Read EXPRES data from FITS a file using Filename from a DataFrameRow.
@@ -201,14 +217,14 @@ function read_data(dfr::DataFrameRow{DataFrame,DataFrames.Index};
                             store_min_data::Bool = false, store_blaze::Bool = !store_min_data,
                             store_continuum::Bool = !store_min_data, store_tellurics::Bool = !store_min_data,
                             store_pixel_mask::Bool = !store_min_data, store_excalibur_mask::Bool = use_excalibur,
-                            store_all_metadata::Bool = !store_min_data)
+                            store_all_metadata::Bool = !store_min_data, kwargs...)
     fn = dfr.Filename
     metadata = Dict(zip(keys(dfr),values(dfr)))
-    read_data(fn,metadata,  normalization=normalization, use_excalibur=use_excalibur,
+    read_data(fn,metadata; normalization=normalization, use_excalibur=use_excalibur,
                             # store_min_data=store_min_data,
                             store_blaze=store_blaze, store_continuum=store_continuum, store_tellurics=store_tellurics,
                             store_pixel_mask=store_pixel_mask, store_excalibur_mask=store_excalibur_mask,
-                            store_all_metadata=store_all_metadata )
+                            store_all_metadata=store_all_metadata, kwargs...)
 end
 
 """ Read only EXPRES data from FITS file, and leave metadata empty."""

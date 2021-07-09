@@ -77,8 +77,7 @@ Returns a dataframe containing a list of files to be read and some metadata (e.g
 - verbose = true
 """
 function make_manifest(data_path::String, target_subdir::String, Inst::Module; verbose::Bool = true)
-   make_manifest(joinpath(data_path,target_subdir), Inst, verbose=verbose)
-   return df_files
+   return make_manifest(joinpath(data_path,target_subdir), Inst, verbose=verbose)
 end
 
 """Read manifest containing `filename`, `bjd`, `target`, and optionally additional metadata from CSV file. """
