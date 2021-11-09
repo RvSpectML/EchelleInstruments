@@ -46,19 +46,19 @@ Optional inputs:
 function read_metradata_from_fits
 end
 
-function read_metadata_from_fits(file::Union{String,FITS}, fields::Array{Symbol,1} ; hdu::Integer = 1)
+function read_metadata_from_fits(file::Union{String,FITS}, fields::Array{Symbol,1} ; hdu::Union{Integer,String} = 1)
     fields_str=string.(fields)
     read_metadata_from_fits(file,hdu=hdu,fields=fields,fields_str=fields_str)
 end
 
-function read_metadata_from_fits(file::Union{String,FITS}, fields_str::AbstractArray{AS,1} ; hdu::Integer = 1)  where { AS<:AbstractString }
+function read_metadata_from_fits(file::Union{String,FITS}, fields_str::AbstractArray{AS,1} ; hdu::Union{Integer,String} = 1)  where { AS<:AbstractString }
     fields = map(f->Symbol(f),fields_str)
     read_metadata_from_fits(file,hdu=hdu,fields=fields,fields_str=fields_str)
 end
 
-function read_metadata_from_fits(f::FITS; fields::Array{Symbol,1}, fields_str::AbstractArray{AS,1}, hdu::Integer = 1 )  where { AS<:AbstractString }
+function read_metadata_from_fits(f::FITS; fields::Array{Symbol,1}, fields_str::AbstractArray{AS,1}, hdu::Union{Integer,String} = 1 )  where { AS<:AbstractString }
     @assert length(fields) == length(fields_str)
-    @assert 1 <= hdu <= 3
+    @assert typeof(hdu) == String || 1 <= hdu <= length(f)
     hdr = FITSIO.read_header(f[hdu])
     #values = Vector{Any}(undef,length(fields))
     values_mask = falses(length(fields))
@@ -77,7 +77,7 @@ function read_metadata_from_fits(f::FITS; fields::Array{Symbol,1}, fields_str::A
     return df
 end
 
-function read_metadata_from_fits(fn::String; fields::Array{Symbol,1}, fields_str::AbstractArray{AS,1}, hdu::Integer = 1 )  where { AS<:AbstractString }
+function read_metadata_from_fits(fn::String; fields::Array{Symbol,1}, fields_str::AbstractArray{AS,1}, hdu::Union{Integer,String} = 1 )  where { AS<:AbstractString }
     f = FITS(fn)
     read_metadata_from_fits(f; fields=fields, fields_str=fields_str, hdu=hdu )
 end

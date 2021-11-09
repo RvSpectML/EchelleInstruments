@@ -4,6 +4,8 @@
 Author: Eric Ford and collaborators
 Created: August 2020
 Updated: March 2021 for DRP v0.7
+         May 2021 for DRP v1.0
+         November 2021 for DRP v1.1
 """
 
 """ Delegates loading of code specifying types essential to the package.  """
@@ -85,8 +87,10 @@ import RvSpectMLBase: metadata_symbols_default, metadata_strings_default
 #metadata_strings_default(::AnyNEID) = String["OBSJD", "SKY-OBJ", "SSBZ000"]
 =#
 # Headers at KPNO
-metadata_symbols_default(::AnyNEID) = Symbol[:bjd, :target, :exptime, :airmass, :ssbz]
-metadata_strings_default(::AnyNEID) = String["OBSJD", "OBJECT", "EXPTIME", "AIRMASS",  "SSBZ100"]
+metadata_symbols_default(::AnyNEID) = Symbol[:bjd, :target, :exptime, :airmass, :ssbz,
+                            :wavecal, :driftfun, :drpversion ]
+metadata_strings_default(::AnyNEID) = String["OBSJD", "OBJECT", "EXPTIME", "AIRMASS",  "SSBZ100",
+                            "WAVECAL", "DRIFTFUN", "E_VER" ]
 
 import RvSpectMLBase: default_ccf_mask_v_width
 default_ccf_mask_v_width(::AnyNEID) = 620.953

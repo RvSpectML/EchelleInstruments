@@ -7,7 +7,7 @@ Created: August 2020
 
 """Create Dataframe containing filenames and key data for all files neid*.fits in directory"""
 function make_manifest(data_path::String ; max_spectra_to_use::Int = 1000 )
-    df_filenames = EchelleInstruments.make_manifest(data_path,r"^neidL1_\d+[T\.]\d+\.fits$")
+    df_filenames = EchelleInstruments.make_manifest(data_path,r"^neidL[1,2]_\d+[T\.]\d+\.fits$")
     #=
     dir_filelist = readdir(data_path,join=true)
     idx_spectra = map(fn->occursin(r"^neidL1_\d+[T\.]\d+\.fits$", last(split(fn,'/')) ),dir_filelist)
@@ -25,9 +25,11 @@ function make_manifest(data_path::String ; max_spectra_to_use::Int = 1000 )
     allowmissing!(df_files, keys[map(k->k∉[:Filename, :bjd, :target, :airmass],keys)] )
     #println("df_files = ", df_files)
 
+
     #if length(spectra_filelist) >= 2
     if length(df_filenames.Filename) >= 2
-        map(fn->add_metadata_from_fits!(df_files,fn),df_filenames.Filename[2:end])
+        max_idx = min(max_spectra_to_use,length(df_filenames.Filename))
+        map(fn->add_metadata_from_fits!(df_files,fn),df_filenames.Filename[2:max_idx])
     end
     #=
     for i in 2:length(spectra_filelist)
@@ -51,16 +53,59 @@ function make_manifest(data_path::String ; max_spectra_to_use::Int = 1000 )
 end
 
 """Create Dict containing filename and default metadata from file."""
-function read_metadata(fn::Union{String,FITS})
+function read_metadata(fn::String)
+    f = FITS(fn)
+    read_metadata(f)
+end
+
+function read_metadata(f::FITS)
     fields_to_save = metadata_symbols_default(NEID2D())
     fields_str_to_save = metadata_strings_default(NEID2D())
-    dict = read_metadata_from_fits(fn,fields=fields_to_save,fields_str=fields_str_to_save)
+    dict = read_metadata_from_fits(f,fields=fields_to_save,fields_str=fields_str_to_save)
     check_metadata_fields_expected_present(dict,fields_to_save)
-    dict[:Filename] = fn
+    dict[:Filename] = f.filename
     if haskey(dict,:airmass) && typeof(dict[:airmass]) == String
        dict[:airmass] = parse(Float64,dict[:airmass])
     end
-    return dict
+    hdr1 = read_header(f[1])
+    if hdr1["DATALVL"] == 2
+        dict_ccf = read_metadata_ccf(f)
+        dict_expmeter = get_exposure_meter_summary(f)
+    end
+    return merge(dict,dict_ccf,dict_expmeter)
+end
+
+function read_metadata_ccf(f::FITS)
+    fields_to_save = [ :drp_extsnr, :drp_ccfjdmod, :drp_ccfrvmod, :drp_dvrmsmod]
+    fields_str_to_save = [ "EXTSNR", "CCFJDMOD", "CCFRVMOD", "DVRMSMOD"]
+    dict = read_metadata_from_fits(f,fields=fields_to_save,fields_str=fields_str_to_save, hdu="CCFS")
+end
+
+function read_metadata_ccf(fn::String)
+    f = FITS(fn)
+    read_metadata_ccf(f)
+end
+
+"""Create Dict containing filename and default metadata from file."""
+function read_exposure_meter(f::FITS)
+    hdr1 = read_header(f[1])
+    exptime = hdr1["EXPTIME"]
+    t_range = 2:(round(Int64,exptime)-1)
+    λ_range = 38:97
+    fiber = 5
+    expmeter_data = read(f["EXPMETER"],t_range,λ_range,fiber)
+end
+
+function read_exposure_meter(fn::String)
+    f = FITS(fn)
+    read_exposure_meter(f)
+end
+
+function get_exposure_meter_summary(f::Union{FITS,String})
+    expmeter_data = read_exposure_meter(f)
+    mean_expmeter = mean(sum(expmeter_data,dims=2),dims=1)[1,1]
+    rms_expmeter = sqrt(var(sum(expmeter_data,dims=2),mean=mean_expmeter,corrected=false))
+    Dict(:expmeter_mean => mean_expmeter, :expmeter_rms => rms_expmeter )
 end
 
 function add_metadata_from_fits!(df::DataFrame, fn::String)
@@ -69,7 +114,7 @@ function add_metadata_from_fits!(df::DataFrame, fn::String)
     #if metadata_keep[:target] != "Solar" return df end
     calibration_target_substrings = ["Etalon","LFC","ThArS","LDLS","FlatBB"]
 
-   if any(map(ss->contains( metadata_keep[:target],ss),calibration_target_substrings)) 
+   if any(map(ss->contains( metadata_keep[:target],ss),calibration_target_substrings))
       return df
    end
 
@@ -96,63 +141,114 @@ end
 """ Read NEID data from FITS file, and return in a Spectra2DBasic object."""
 function read_data   end
 
-function read_data(f::FITS, metadata::Dict{Symbol,Any} )
+function read_data(f::FITS, metadata::Dict{Symbol,Any}; normalization::Symbol = :raw )
     @assert length(f) >= 2
-    @assert all(map(i->typeof(f[i]) <: FITSIO.ImageHDU,2:length(f)))
+    @assert all(map(i->typeof(f[i]) <: Union{FITSIO.ImageHDU,FITSIO.TableHDU},2:length(f)))
     img_idx = Dict(map(i->first(read_key(f[i],"EXTNAME"))=>i,2:length(f)))
     λ, flux, var  = FITSIO.read(f[img_idx["SCIWAVE"]]), FITSIO.read(f[img_idx["SCIFLUX"]]), FITSIO.read(f[img_idx["SCIVAR"]])
-    metadata[:normalization] = :raw
+
+    if normalization == :raw
+        metadata[:normalization] = :raw
+    elseif normalization == :blaze
+        blaze = read_blaze(f)
+        flux ./= blaze
+        var ./= blaze.^2
+        metadata[:normalization] = :blaze
+    else
+        @error "# Reading data directly with normalization " * string(normalization) * " is not implemented."
+    end
+
     spectrum = Spectra2DBasic(λ, flux, var, NEID2D(), metadata=metadata)
     apply_doppler_boost!(spectrum,metadata)
     return spectrum
 end
 
 
-function read_data(f::FITS, metadata::Dict{Symbol,Any}, orders_to_read::AR ) where  { AR<:AbstractRange }
+function read_data(f::FITS, metadata::Dict{Symbol,Any}, orders_to_read::AR; normalization::Symbol = :raw ) where  { AR<:AbstractRange }
     @assert length(f) >= 2
-    @assert all(map(i->typeof(f[i]) <: FITSIO.ImageHDU,2:length(f)))
+    @assert all(map(i->typeof(f[i]) <: Union{FITSIO.ImageHDU,FITSIO.TableHDU},2:length(f)))
     img_idx = Dict(map(i->first(read_key(f[i],"EXTNAME"))=>i,2:length(f)))
     λ, flux, var  = FITSIO.read(f[img_idx["SCIWAVE"]],:,orders_to_read), FITSIO.read(f[img_idx["SCIFLUX"]],:,orders_to_read), FITSIO.read(f[img_idx["SCIVAR"]],:,orders_to_read)
-    metadata[:normalization] = :raw
+
+    if normalization == :raw
+        metadata[:normalization] = :raw
+    elseif normalization == :blaze
+        blaze = read_blaze(f,orders_to_read)
+        flux ./= blaze
+        var ./= blaze.^2
+        metadata[:normalization] = :blaze
+    else
+        @error "# Reading data directly with normalization " * string(normalization) * " is not implemented."
+    end
     spectrum = Spectra2DBasic(λ, flux, var, NEID2D(), metadata=metadata)
     apply_doppler_boost!(spectrum,metadata)
     return spectrum
 end
 
 
-function read_data(fn::String, metadata::Dict{Symbol,Any} )
+function read_data(fn::String, metadata::Dict{Symbol,Any}; normalization::Symbol = :raw  )
     f = FITS(fn)
-    read_data(f, metadata)
+    read_data(f, metadata, normalization=normalization)
 end
 
-function read_data(fn::String)
+function read_data(fn::String; normalization::Symbol = :raw )
     f = FITS(fn)
     hdr = FITSIO.read_header(f[1])
     metadata = Dict(zip(map(k->Symbol(k),hdr.keys),hdr.values))
-    read_data(f, metadata)
+    read_data(f, metadata, normalization=normalization)
 end
 
-function read_data(dfr::DataFrameRow{DataFrame,DataFrames.Index})
+function read_data(dfr::DataFrameRow{DataFrame,DataFrames.Index}; normalization::Symbol = :raw )
     fn = dfr.Filename
     metadata = Dict(zip(keys(dfr),values(dfr)))
-    read_data(fn,metadata)
+    read_data(fn,metadata, normalization=normalization)
 end
 
-function read_data(fn::String, orders_to_read::AR ) where  { AR<:AbstractRange }
+function read_data(fn::String, orders_to_read::AR; normalization::Symbol = :raw  ) where  { AR<:AbstractRange }
     f = FITS(fn)
     metadata = read_metadata(f)
-    read_data(f,metadata, orders_to_read)
+    read_data(f,metadata, orders_to_read, normalization=normalization)
 end
 
-function read_data(dfr::DataFrameRow{DataFrame,DataFrames.Index}, orders_to_read::AR ) where  { AR<:AbstractRange }
+function read_data(dfr::DataFrameRow{DataFrame,DataFrames.Index}, orders_to_read::AR; normalization::Symbol = :raw  ) where  { AR<:AbstractRange }
     fn = dfr.Filename
     metadata = Dict(zip(keys(dfr),values(dfr)))
-    read_data(fn,metadata, orders_to_read)
+    read_data(fn,metadata, orders_to_read, normalization=normalization)
 end
 
 function apply_barycentric_correction!(λ::AbstractArray{T,1}, z::Real) where { T<:Real }
-
+    # TODO: WRITE ME
 end
+
+""" Read blaze for NEID science fiber from FITS file."""
+function read_blaze end
+
+function read_blaze(fn::String)
+    f = FITS(fn)
+    read_blaze(f)
+end
+
+function read_blaze(fn::String, orders_to_read::AR ) where  { AR<:AbstractRange }
+    f = FITS(fn)
+    read_blaze(f,orders_to_read)
+end
+
+function read_blaze(f::FITS )
+    @assert length(f) >= 2
+    @assert all(map(i->typeof(f[i]) <: Union{FITSIO.ImageHDU,FITSIO.TableHDU},2:length(f)))
+    img_idx = Dict(map(i->first(read_key(f[i],"EXTNAME"))=>i,2:length(f)))
+    blaze  = FITSIO.read(f[img_idx["SCIBLAZE"]])
+    return blaze
+end
+
+function read_blaze(f::FITS, orders_to_read::AR ) where  { AR<:AbstractRange }
+    @assert length(f) >= 2
+    @assert all(map(i->typeof(f[i]) <: Union{FITSIO.ImageHDU,FITSIO.TableHDU},2:length(f)))
+    img_idx = Dict(map(i->first(read_key(f[i],"EXTNAME"))=>i,2:length(f)))
+    blaze  = FITSIO.read(f[img_idx["SCIBLAZE"]],:,orders_to_read)
+    return blaze
+end
+
 
 """ Read space delimited file with differential extinction corrections, interpolate to bjd's in df and insert into df[:,diff_ext_rv]. """
 function read_differential_extinctions!(fn::String, df::DataFrame, df_time_col::Symbol = :bjd)
@@ -173,7 +269,7 @@ end
 """ Read calibrator data """
 function read_cal_data(f::FITS, metadata::Dict{Symbol,Any}, orders_to_read::AR )  where { AR<:AbstractRange  }
     @assert length(f) >= 2
-    @assert all(map(i->typeof(f[i]) <: FITSIO.ImageHDU,2:length(f)))
+    @assert all(map(i->typeof(f[i]) <: Union{FITSIO.ImageHDU,FITSIO.TableHDU},2:length(f)))
     img_idx = Dict(map(i->first(read_key(f[i],"EXTNAME"))=>i,2:length(f)))
     λ, flux, var  = FITSIO.read(f[img_idx["CALWAVE"]],:,orders_to_read), FITSIO.read(f[img_idx["CALFLUX"]],:,orders_to_read), FITSIO.read(f[img_idx["CALVAR"]],:,orders_to_read)
     metadata[:normalization] = :raw
