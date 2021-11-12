@@ -90,10 +90,13 @@ end
 function read_exposure_meter(f::FITS)
     hdr1 = read_header(f[1])
     exptime = hdr1["EXPTIME"]
-    t_range = 2:(round(Int64,exptime)-1)
     λ_range = 38:97
     fiber = 5
-    expmeter_data = read(f["EXPMETER"],t_range,λ_range,fiber)
+    #expmeter_data = read(f["EXPMETER"],t_range,λ_range,fiber)
+    expmeter_data = read(f["EXPMETER"]) # ,:,λ_range,fiber)
+    t_len = size(expmeter_data,1)
+    t_range = 2:(max(round(Int64,exptime)-1,t_len))
+    view(expmeter_data, t_range,λ_range,fiber)
 end
 
 function read_exposure_meter(fn::String)
