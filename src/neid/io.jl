@@ -95,7 +95,7 @@ function read_exposure_meter(f::FITS)
     #expmeter_data = read(f["EXPMETER"],t_range,λ_range,fiber)
     expmeter_data = read(f["EXPMETER"]) # ,:,λ_range,fiber)
     t_len = size(expmeter_data,1)
-    t_range = 2:(max(round(Int64,exptime)-1,t_len))
+    t_range = 2:(min(round(Int64,exptime)-1,t_len))
     view(expmeter_data, t_range,λ_range,fiber)
 end
 
@@ -105,10 +105,19 @@ function read_exposure_meter(fn::String)
 end
 
 function get_exposure_meter_summary(f::Union{FITS,String})
-    expmeter_data = read_exposure_meter(f)
-    mean_expmeter = mean(sum(expmeter_data,dims=2),dims=1)[1,1]
-    rms_expmeter = sqrt(var(sum(expmeter_data,dims=2),mean=mean_expmeter,corrected=false))
-    Dict(:expmeter_mean => mean_expmeter, :expmeter_rms => rms_expmeter )
+    try 
+       expmeter_data = read_exposure_meter(f)
+       mean_expmeter = mean(sum(expmeter_data,dims=2),dims=1)[1,1]
+       rms_expmeter = sqrt(var(sum(expmeter_data,dims=2),mean=mean_expmeter,corrected=false))
+       return Dict(:expmeter_mean => mean_expmeter, :expmeter_rms => rms_expmeter )
+    catch ex
+       if typeof(f) == String
+          @warn("*** Error extracting exposure meter data for " * string(f))
+       else
+          @warn("*** Error extracting exposure meter data for " * string(f.filename))
+       end
+       return Dict(:expmeter_mean => missing, :expmeter_rms => missing )
+    end
 end
 
 function add_metadata_from_fits!(df::DataFrame, fn::String)
