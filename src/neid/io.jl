@@ -96,6 +96,9 @@ function read_exposure_meter(f::FITS)
     expmeter_data = read(f["EXPMETER"]) # ,:,λ_range,fiber)
     t_len = size(expmeter_data,1)
     t_range = 2:(min(round(Int64,exptime)-1,t_len))
+    if t_len < floor(Int64,exptime)
+       @warn("*** Exposure meter contains fewer readings than floor(EXPTIME) in " * string(f.filename) )
+    end
     view(expmeter_data, t_range,λ_range,fiber)
 end
 
