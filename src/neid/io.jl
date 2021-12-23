@@ -111,15 +111,25 @@ function get_exposure_meter_summary(f::Union{FITS,String})
     try 
        expmeter_data = read_exposure_meter(f)
        mean_expmeter = mean(sum(expmeter_data,dims=2),dims=1)[1,1]
+       mean_expmeter_blue = mean(sum(view(expmeter_data,:,1:20),dims=2),dims=1)[1,1]
+       mean_expmeter_green = mean(sum(view(expmeter_data,:,21:40),dims=2),dims=1)[1,1]
+       mean_expmeter_red = mean(sum(view(expmeter_data,:,41:60),dims=2),dims=1)[1,1]
        rms_expmeter = sqrt(var(sum(expmeter_data,dims=2),mean=mean_expmeter,corrected=false))
-       return Dict(:expmeter_mean => mean_expmeter, :expmeter_rms => rms_expmeter )
+       
+       expmeter_data_winsor = similar(expmeter_data)
+       for i in 1:size(expmeter_data_winsor,2)
+           expmeter_data_winsor[:,i] .= winsor(view(expmeter_data,:,i),count=2)
+       end
+       expmeter_mean_winsor = mean(sum(expmeter_data_winsor,dims=2),dims=1)[1,1]
+       expmeter_rms_winsor = sqrt(var(sum(expmeter_data_winsor,dims=2),mean=expmeter_mean_winsor,corrected=false))
+       return Dict(:expmeter_mean => mean_expmeter, :expmeter_rms => rms_expmeter, :expmeter_mean_winsor=>expmeter_mean_winsor, :expmeter_rms_winsor=>expmeter_rms_winsor, :expmeter_mean_red=>mean_expmeter_red, :expmeter_mean_green=>mean_expmeter_green, :expmeter_mean_blue=>mean_expmeter_blue )
     catch ex
        if typeof(f) == String
           @warn("*** Error extracting exposure meter data for " * string(f))
        else
           @warn("*** Error extracting exposure meter data for " * string(f.filename))
        end
-       return Dict(:expmeter_mean => missing, :expmeter_rms => missing )
+       return Dict(:expmeter_mean => missing, :expmeter_rms => missing, :expmeter_mean_winsor=>expmeter_mean_winsor, :expmeter_rms_winsor=>expmeter_rms_winsor, :expmeter_mean_red=>missing, :expmeter_mean_green=>missing, :expmeter_mean_blue=>missing )
     end
 end
 
