@@ -71,8 +71,10 @@ function read_metadata(f::FITS)
     if hdr1["DATALVL"] == 2
         dict_ccf = read_metadata_ccf(f)
         dict_expmeter = get_exposure_meter_summary(f)
+        dict_activity = read_activity_table(f)
+        dict = merge(dict,dict_ccf,dict_expmeter,dict_activity)
     end
-    return merge(dict,dict_ccf,dict_expmeter)
+    return dict
 end
 
 function read_metadata_ccf(f::FITS)
@@ -84,6 +86,24 @@ end
 function read_metadata_ccf(fn::String)
     f = FITS(fn)
     read_metadata_ccf(f)
+end
+
+function read_activity_table(fn::String)
+    f = FITS(fn)
+    read_activity_table(f)
+end
+
+"""Create Dict containing filename and default metadata from file."""
+function read_activity_table(f::FITS)
+    activity_index = read(f["ACTIVITY"],"INDEX")
+    activity_value = read(f["ACTIVITY"],"VALUE")
+    activity_uncert = read(f["ACTIVITY"],"UNCERTAINTY")
+    telluric_zenith = read_header(f["TELLURIC"])["ZENITH"]
+    telluric_wvapor = read_header(f["TELLURIC"])["WVAPOR"]
+    Dict(vcat(Symbol.(activity_index) .=> read(f["ACTIVITY"],"VALUE"), 
+              Symbol.("σ_" .* activity_index) .=> read(f["ACTIVITY"],"UNCERTAINTY"), 
+              Symbol("telluric_zenith") => telluric_zenith, 
+              Symbol("telluric_wvapor") => telluric_wvapor ) )
 end
 
 """Create Dict containing filename and default metadata from file."""
