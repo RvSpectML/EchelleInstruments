@@ -186,7 +186,7 @@ end
 """ Read NEID data from FITS file, and return in a Spectra2DBasic object."""
 function read_data   end
 
-function read_data(f::FITS, metadata::Dict{Symbol,Any}; normalization::Symbol = :raw )
+function read_data(f::FITS, metadata::Dict{Symbol,Any}; normalization::Symbol = :raw, return_λ_obs::Bool=false)
     @assert length(f) >= 2
     @assert all(map(i->typeof(f[i]) <: Union{FITSIO.ImageHDU,FITSIO.TableHDU},2:length(f)))
     img_idx = Dict(map(i->first(read_key(f[i],"EXTNAME"))=>i,2:length(f)))
@@ -203,13 +203,17 @@ function read_data(f::FITS, metadata::Dict{Symbol,Any}; normalization::Symbol = 
         @error "# Reading data directly with normalization " * string(normalization) * " is not implemented."
     end
 
-    spectrum = Spectra2DBasic(λ, flux, var, NEID2D(), metadata=metadata)
+    if return_λ_obs
+        spectrum = Spectra2DExtended(λ, copy(λ), flux, var, NEID2D(), metadata=metadata)
+    else
+        spectrum = Spectra2DBasic(λ, flux, var, NEID2D(), metadata=metadata)
+    end
     apply_doppler_boost!(spectrum,metadata)
     return spectrum
 end
 
 
-function read_data(f::FITS, metadata::Dict{Symbol,Any}, orders_to_read::AR; normalization::Symbol = :raw ) where  { AR<:AbstractRange }
+function read_data(f::FITS, metadata::Dict{Symbol,Any}, orders_to_read::AR; normalization::Symbol = :raw, return_λ_obs::Bool=false) where  { AR<:AbstractRange }
     @assert length(f) >= 2
     @assert all(map(i->typeof(f[i]) <: Union{FITSIO.ImageHDU,FITSIO.TableHDU},2:length(f)))
     img_idx = Dict(map(i->first(read_key(f[i],"EXTNAME"))=>i,2:length(f)))
@@ -225,40 +229,49 @@ function read_data(f::FITS, metadata::Dict{Symbol,Any}, orders_to_read::AR; norm
     else
         @error "# Reading data directly with normalization " * string(normalization) * " is not implemented."
     end
-    spectrum = Spectra2DBasic(λ, flux, var, NEID2D(), metadata=metadata)
+    if return_λ_obs
+        spectrum = Spectra2DExtended(λ, copy(λ), flux, var, NEID2D(), metadata=metadata)
+    else
+        spectrum = Spectra2DBasic(λ, flux, var, NEID2D(), metadata=metadata)
+    end
     apply_doppler_boost!(spectrum,metadata)
     return spectrum
 end
 
 
-function read_data(fn::String, metadata::Dict{Symbol,Any}; normalization::Symbol = :raw  )
+function read_data(fn::String, metadata::Dict{Symbol,Any}; kwargs...)
     f = FITS(fn)
-    read_data(f, metadata, normalization=normalization)
+    read_data(f, metadata; kwargs...)
 end
 
-function read_data(fn::String; normalization::Symbol = :raw )
+function read_data(fn::String; kwargs...)
     f = FITS(fn)
     hdr = FITSIO.read_header(f[1])
     metadata = Dict(zip(map(k->Symbol(k),hdr.keys),hdr.values))
-    read_data(f, metadata, normalization=normalization)
+    read_data(f, metadata; kwargs...)
 end
 
-function read_data(dfr::DataFrameRow{DataFrame,DataFrames.Index}; normalization::Symbol = :raw )
+function read_data(dfr::DataFrameRow{DataFrame,DataFrames.Index}; kwargs...)
     fn = dfr.Filename
     metadata = Dict(zip(keys(dfr),values(dfr)))
-    read_data(fn,metadata, normalization=normalization)
+    read_data(fn,metadata; kwargs...)
 end
 
-function read_data(fn::String, orders_to_read::AR; normalization::Symbol = :raw  ) where  { AR<:AbstractRange }
+function read_data(fn::String, metadata::Dict{Symbol,Any}, orders_to_read::AR; kwargs...) where  { AR<:AbstractRange }
+    f = FITS(fn)
+    read_data(f, metadata, orders_to_read; kwargs...)
+end
+
+function read_data(fn::String, orders_to_read::AR; kwargs...) where  { AR<:AbstractRange }
     f = FITS(fn)
     metadata = read_metadata(f)
-    read_data(f,metadata, orders_to_read, normalization=normalization)
+    read_data(f,metadata, orders_to_read; kwargs...)
 end
 
-function read_data(dfr::DataFrameRow{DataFrame,DataFrames.Index}, orders_to_read::AR; normalization::Symbol = :raw  ) where  { AR<:AbstractRange }
+function read_data(dfr::DataFrameRow{DataFrame,DataFrames.Index}, orders_to_read::AR; kwargs...) where  { AR<:AbstractRange }
     fn = dfr.Filename
     metadata = Dict(zip(keys(dfr),values(dfr)))
-    read_data(fn,metadata, orders_to_read, normalization=normalization)
+    read_data(fn, metadata, orders_to_read; kwargs...)
 end
 
 function apply_barycentric_correction!(λ::AbstractArray{T,1}, z::Real) where { T<:Real }
