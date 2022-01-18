@@ -21,6 +21,7 @@ using CSV, DataFrames, Query
 using FITSIO
 using Interpolations
 using NaNMath, Missings
+using Statistics, StatsBase
 
 """ Trait for 1D Extracted spectra from NEID """
 struct NEID1D <: AbstractInstrument1D end
