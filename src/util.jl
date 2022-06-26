@@ -52,7 +52,7 @@ function merge_sorted_wavelength_ranges(df::DataFrame; min_Δv_clean::Real = def
 end
 
 """ `calc_complement_wavelength_ranges( df_in ; lambda_start, lambda_stop )`
-Return DataFrame with the compliment of wavelength ranges in input DataFrame.
+Return DataFrame with the complement of wavelength ranges in input DataFrame.
 Inputs:
 - `df_in`: DataFrame containing `lambda_lo` and `lambda_hi`
 Optional Inputs:
