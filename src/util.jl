@@ -76,14 +76,14 @@ end
 #global already_printed_stuff = 0
 
 """ `make_ranges_without_tellurics( telluric_list ; lambda_start, lambda_stop, min_Δv, max_Δv )`
-Return DataFrame with the compliment of wavelength ranges in input DataFrame.
+Return DataFrame with the complement of wavelength ranges in input DataFrame.
 Inputs:
 - `telluric_list`: DataFrame containing `lambda_lo` and `lambda_hi` for each wavelength range to be excluded due to tellurics
 Optional Inputs:
 - `min_Δv`:  Don't include chunks that are smaller than `min_Δv` (2*max barycentric correction)
 - `max_Δv`:  Split up any chunks larger than `max_Δv` (Inf)
 - `λ_start`:   Output range should start at `λ_start` rather than first entry in telluric_list
-- `λ_stop`:   Output range should end at `λ_stop` rather than first entry in telluric_list
+- `λ_stop`:   Output range should end at `λ_stop` rather than last entry in telluric_list
 """
 function make_ranges_without_tellurics(telluric_list::DataFrame; min_Δv::Real = 2*RvSpectMLBase.max_bc, max_Δv::Real =Inf, λ_start::Real = telluric_list[1,:lambda_lo], λ_stop::Real=telluric_list[end,:lambda_hi] )
     @assert issorted(telluric_list.lambda_lo)
