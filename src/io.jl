@@ -37,13 +37,13 @@ function read_fits_header(fn::String; header_idx::Integer = 1)
     read_header(fn,header_idx=header_idx)
 end
 
-""" `read_metradata_from_fits( filename, fields )`
+""" `read_metadata_from_fits( filename, fields )`
 Read metadata in FITS header for specified keys and return data as a Dict.  `fields` can be an array of symbols or strings.
 Optional inputs:
 - Passing both fields (an array of symbols) and fields_str (an array of strings) as named parameters allows for differences in string used in FITS file and Symbol used in resulting Dict.
 - hdu: Specifies which HDU to read from the FITS file.  (Default: 1)
 """
-function read_metradata_from_fits
+function read_metadata_from_fits
 end
 
 function read_metadata_from_fits(file::Union{String,FITS}, fields::Array{Symbol,1} ; hdu::Union{Integer,String} = 1)
