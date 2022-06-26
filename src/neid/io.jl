@@ -149,7 +149,8 @@ function get_exposure_meter_summary(f::Union{FITS,String})
        else
           @warn("*** Error extracting exposure meter data for " * string(f.filename))
        end
-       return Dict(:expmeter_mean => missing, :expmeter_rms => missing, :expmeter_mean_winsor=>expmeter_mean_winsor, :expmeter_rms_winsor=>expmeter_rms_winsor, :expmeter_mean_red=>missing, :expmeter_mean_green=>missing, :expmeter_mean_blue=>missing )
+       #return Dict(:expmeter_mean => missing, :expmeter_rms => missing, :expmeter_mean_winsor=>expmeter_mean_winsor, :expmeter_rms_winsor=>expmeter_rms_winsor, :expmeter_mean_red=>missing, :expmeter_mean_green=>missing, :expmeter_mean_blue=>missing )
+       return Dict(:expmeter_mean => missing, :expmeter_rms => missing, :expmeter_mean_winsor=>missing, :expmeter_rms_winsor=>missing, :expmeter_mean_red=>missing, :expmeter_mean_green=>missing, :expmeter_mean_blue=>missing )
     end
 end
 
@@ -234,6 +235,11 @@ end
 function read_data(fn::String, metadata::Dict{Symbol,Any}; normalization::Symbol = :raw  )
     f = FITS(fn)
     read_data(f, metadata, normalization=normalization)
+end
+
+function read_data(fn::String, metadata::Dict{Symbol,Any}, orders_to_read::AR; normalization::Symbol = :raw  )  where  { AR<:AbstractRange }
+    f = FITS(fn)
+    read_data(f, metadata, orders_to_read, normalization=normalization)
 end
 
 function read_data(fn::String; normalization::Symbol = :raw )
