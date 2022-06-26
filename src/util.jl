@@ -28,7 +28,7 @@ Return Dataframe of non-overlapping, sorted wavelength ranges (keys lambda_lo an
 min_Δv_clean limits results included in output.
 Input dataframe are assumed to be sorted by :lambda_lo
 """
-function merge_sorted_wavelength_ranges(df::DataFrame; min_Δv_clean::Real = default_min_Δv_clean) where { T<:Real }
+function merge_sorted_wavelength_ranges(df::DataFrame; min_Δv_clean::Real = default_min_Δv_clean)
     @assert hasproperty(df, :lambda_lo)
     @assert hasproperty(df, :lambda_hi)
     @assert issorted(df[!,:lambda_lo])
