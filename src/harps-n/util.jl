@@ -100,11 +100,11 @@ end
 
 
 """
-   `make_clean_line_list_from_tellurics(line_list, harpsn_data; Δv_to_avoid_tellurics )`
+   `make_clean_line_list_from_tellurics(line_list, harpsn_data; Δv_to_avoid_tellurics, v_center_to_avoid_tellurics, tellurics_filename )`
 Returns a new line list that excludes lines with telluric contamination.
 Inputs:
 - `line_list`:  Dataframe containing field lambda
-# - `harpsn_data`:  Array of spectra
+- `harpsn_data`:  Array of spectra
 - `Δv_to_avoid_tellurics`:  in m/s
 - `v_center_to_avoid_tellurics` : in m/s
 - `tellurics_filename`:  filename with wavelength ranges affected by tellurics

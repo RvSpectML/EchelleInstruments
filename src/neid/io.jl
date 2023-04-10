@@ -100,9 +100,9 @@ function read_activity_table(f::FITS)
     activity_uncert = read(f["ACTIVITY"],"UNCERTAINTY")
     telluric_zenith = read_header(f["TELLURIC"])["ZENITH"]
     telluric_wvapor = read_header(f["TELLURIC"])["WVAPOR"]
-    Dict(vcat(Symbol.(activity_index) .=> read(f["ACTIVITY"],"VALUE"), 
-              Symbol.("σ_" .* activity_index) .=> read(f["ACTIVITY"],"UNCERTAINTY"), 
-              Symbol("telluric_zenith") => telluric_zenith, 
+    Dict(vcat(Symbol.(activity_index) .=> read(f["ACTIVITY"],"VALUE"),
+              Symbol.("σ_" .* activity_index) .=> read(f["ACTIVITY"],"UNCERTAINTY"),
+              Symbol("telluric_zenith") => telluric_zenith,
               Symbol("telluric_wvapor") => telluric_wvapor ) )
 end
 
@@ -128,14 +128,14 @@ function read_exposure_meter(fn::String)
 end
 
 function get_exposure_meter_summary(f::Union{FITS,String})
-    try 
+    try
        expmeter_data = read_exposure_meter(f)
        mean_expmeter = mean(sum(expmeter_data,dims=2),dims=1)[1,1]
        mean_expmeter_blue = mean(sum(view(expmeter_data,:,1:20),dims=2),dims=1)[1,1]
        mean_expmeter_green = mean(sum(view(expmeter_data,:,21:40),dims=2),dims=1)[1,1]
        mean_expmeter_red = mean(sum(view(expmeter_data,:,41:60),dims=2),dims=1)[1,1]
        rms_expmeter = sqrt(var(sum(expmeter_data,dims=2),mean=mean_expmeter,corrected=false))
-       
+
        expmeter_data_winsor = similar(expmeter_data)
        for i in 1:size(expmeter_data_winsor,2)
            expmeter_data_winsor[:,i] .= winsor(view(expmeter_data,:,i),count=2)
@@ -149,7 +149,8 @@ function get_exposure_meter_summary(f::Union{FITS,String})
        else
           @warn("*** Error extracting exposure meter data for " * string(f.filename))
        end
-       return Dict(:expmeter_mean => missing, :expmeter_rms => missing, :expmeter_mean_winsor=>expmeter_mean_winsor, :expmeter_rms_winsor=>expmeter_rms_winsor, :expmeter_mean_red=>missing, :expmeter_mean_green=>missing, :expmeter_mean_blue=>missing )
+       #return Dict(:expmeter_mean => missing, :expmeter_rms => missing, :expmeter_mean_winsor=>expmeter_mean_winsor, :expmeter_rms_winsor=>expmeter_rms_winsor, :expmeter_mean_red=>missing, :expmeter_mean_green=>missing, :expmeter_mean_blue=>missing )
+       return Dict(:expmeter_mean => missing, :expmeter_rms => missing, :expmeter_mean_winsor=>missing, :expmeter_rms_winsor=>missing, :expmeter_mean_red=>missing, :expmeter_mean_green=>missing, :expmeter_mean_blue=>missing )
     end
 end
 
@@ -244,11 +245,16 @@ function read_data(fn::String, metadata::Dict{Symbol,Any}; kwargs...)
     read_data(f, metadata; kwargs...)
 end
 
-function read_data(fn::String; kwargs...)
+function read_data(fn::String, metadata::Dict{Symbol,Any}, orders_to_read::AR; normalization::Symbol = :raw  )  where  { AR<:AbstractRange }
+    f = FITS(fn)
+    read_data(f, metadata, orders_to_read, normalization=normalization)
+end
+
+function read_data(fn::String; normalization::Symbol = :raw, kwargs...)
     f = FITS(fn)
     hdr = FITSIO.read_header(f[1])
     metadata = Dict(zip(map(k->Symbol(k),hdr.keys),hdr.values))
-    read_data(f, metadata; kwargs...)
+    read_data(f, metadata; normalization=normalization, kwargs...)
 end
 
 function read_data(dfr::DataFrameRow{DataFrame,DataFrames.Index}; kwargs...)

@@ -1,7 +1,7 @@
 name = "EchelleInstruments"
 uuid = "533b6e3a-cbf4-4a92-8a96-bc27ebcb1598"
 authors = ["Eric Ford"]
-version = "0.2.6"
+version = "0.2.7"
 
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
@@ -18,13 +18,13 @@ Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 
 [compat]
-CSV = "0.7, 0.8, 0.9, 0.10"
+CSV = "0.7, 0.8, 0.9.11, 0.10"
 DataFrames = "0.21, 0.22, 1.0, 1.1"
-FITSIO = "0.16"
-Interpolations = "0.12, 0.13"
+FITSIO = "0.16, 0.17"
+Interpolations = "0.12, 0.13, 0.14"
 Missings = "0.4.5, 1.0"
-NaNMath = "0.3.5"
-Polynomials = "1.2, 2"
+NaNMath = "0.3.5, 1"
+Polynomials = "1.2, 2, 3"
 Query = "1"
 RvSpectMLBase = "0.2"
 StatsBase = "0.33"

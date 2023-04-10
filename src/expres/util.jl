@@ -1,5 +1,5 @@
 
-""" Normalize spectrum based on blaze model (also tryies to include black body function) from FITS file. """
+""" Normalize spectrum based on blaze model (also tries to include black body function) from FITS file. """
 function blaze_normalize_spectrum!(spectrum::ST) where { ST<:AbstractSpectra }
     @assert haskey(spectrum.metadata,:continuum)
     if spectrum.metadata[:normalization] == :raw
@@ -19,7 +19,7 @@ function blaze_normalize_spectrum!(spectrum::ST) where { ST<:AbstractSpectra }
     return spectrum
 end
 
-""" Normalize each spectrum based on blaze model (also tryies to include black body function) from FITS files. """
+""" Normalize each spectrum based on blaze model (also tries to include black body function) from FITS files. """
 function blaze_normalize_spectra!(spectra::AS) where { ST<:AbstractSpectra, AS<:AbstractArray{ST} }
     for spectrum in spectra
         blaze_normalize_spectrum!(spectrum)

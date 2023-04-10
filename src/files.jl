@@ -31,7 +31,7 @@ function make_manifest(data_path::String, r::Regex; verbose::Bool = true)
 end
 
 
-""" `make_manifest(data_path::String, target_subdir::String, Inst::Module; [opts] )`
+""" `make_manifest(data_path::String, Inst::Module; [opts] )`
 Returns a dataframe containing a list of files to be read and some metadata (e.g., observation times)
 
 # Optional arguements

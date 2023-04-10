@@ -28,7 +28,7 @@ struct EXPRES1D <: AbstractInstrument1D end
 """ Trait for 2D Extracted spectra from EXPRES """
 struct EXPRES2D <: AbstractInstrument2D end
 
-"Trait to specify any 1D or 2D Extracted spectra from NEID "
+"Trait to specify any 1D or 2D Extracted spectra from EXPRES "
 const AnyEXPRES = Union{EXPRES1D,EXPRES2D}
 
 export EXPRES1D, EXPRES2D, AnyEXPRES
