@@ -100,9 +100,9 @@ function read_activity_table(f::FITS)
     activity_uncert = read(f["ACTIVITY"],"UNCERTAINTY")
     telluric_zenith = read_header(f["TELLURIC"])["ZENITH"]
     telluric_wvapor = read_header(f["TELLURIC"])["WVAPOR"]
-    Dict(vcat(Symbol.(activity_index) .=> read(f["ACTIVITY"],"VALUE"), 
-              Symbol.("σ_" .* activity_index) .=> read(f["ACTIVITY"],"UNCERTAINTY"), 
-              Symbol("telluric_zenith") => telluric_zenith, 
+    Dict(vcat(Symbol.(activity_index) .=> read(f["ACTIVITY"],"VALUE"),
+              Symbol.("σ_" .* activity_index) .=> read(f["ACTIVITY"],"UNCERTAINTY"),
+              Symbol("telluric_zenith") => telluric_zenith,
               Symbol("telluric_wvapor") => telluric_wvapor ) )
 end
 
@@ -128,14 +128,14 @@ function read_exposure_meter(fn::String)
 end
 
 function get_exposure_meter_summary(f::Union{FITS,String})
-    try 
+    try
        expmeter_data = read_exposure_meter(f)
        mean_expmeter = mean(sum(expmeter_data,dims=2),dims=1)[1,1]
        mean_expmeter_blue = mean(sum(view(expmeter_data,:,1:20),dims=2),dims=1)[1,1]
        mean_expmeter_green = mean(sum(view(expmeter_data,:,21:40),dims=2),dims=1)[1,1]
        mean_expmeter_red = mean(sum(view(expmeter_data,:,41:60),dims=2),dims=1)[1,1]
        rms_expmeter = sqrt(var(sum(expmeter_data,dims=2),mean=mean_expmeter,corrected=false))
-       
+
        expmeter_data_winsor = similar(expmeter_data)
        for i in 1:size(expmeter_data_winsor,2)
            expmeter_data_winsor[:,i] .= winsor(view(expmeter_data,:,i),count=2)
@@ -187,7 +187,7 @@ end
 """ Read NEID data from FITS file, and return in a Spectra2DBasic object."""
 function read_data   end
 
-function read_data(f::FITS, metadata::Dict{Symbol,Any}; normalization::Symbol = :raw )
+function read_data(f::FITS, metadata::Dict{Symbol,Any}; normalization::Symbol = :raw, return_λ_obs::Bool=false)
     @assert length(f) >= 2
     @assert all(map(i->typeof(f[i]) <: Union{FITSIO.ImageHDU,FITSIO.TableHDU},2:length(f)))
     img_idx = Dict(map(i->first(read_key(f[i],"EXTNAME"))=>i,2:length(f)))
@@ -204,13 +204,17 @@ function read_data(f::FITS, metadata::Dict{Symbol,Any}; normalization::Symbol = 
         @error "# Reading data directly with normalization " * string(normalization) * " is not implemented."
     end
 
-    spectrum = Spectra2DBasic(λ, flux, var, NEID2D(), metadata=metadata)
+    if return_λ_obs
+        spectrum = Spectra2DExtended(λ, copy(λ), flux, var, NEID2D(), metadata=metadata)
+    else
+        spectrum = Spectra2DBasic(λ, flux, var, NEID2D(), metadata=metadata)
+    end
     apply_doppler_boost!(spectrum,metadata)
     return spectrum
 end
 
 
-function read_data(f::FITS, metadata::Dict{Symbol,Any}, orders_to_read::AR; normalization::Symbol = :raw ) where  { AR<:AbstractRange }
+function read_data(f::FITS, metadata::Dict{Symbol,Any}, orders_to_read::AR; normalization::Symbol = :raw, return_λ_obs::Bool=false) where  { AR<:AbstractRange }
     @assert length(f) >= 2
     @assert all(map(i->typeof(f[i]) <: Union{FITSIO.ImageHDU,FITSIO.TableHDU},2:length(f)))
     img_idx = Dict(map(i->first(read_key(f[i],"EXTNAME"))=>i,2:length(f)))
@@ -226,15 +230,19 @@ function read_data(f::FITS, metadata::Dict{Symbol,Any}, orders_to_read::AR; norm
     else
         @error "# Reading data directly with normalization " * string(normalization) * " is not implemented."
     end
-    spectrum = Spectra2DBasic(λ, flux, var, NEID2D(), metadata=metadata)
+    if return_λ_obs
+        spectrum = Spectra2DExtended(λ, copy(λ), flux, var, NEID2D(), metadata=metadata)
+    else
+        spectrum = Spectra2DBasic(λ, flux, var, NEID2D(), metadata=metadata)
+    end
     apply_doppler_boost!(spectrum,metadata)
     return spectrum
 end
 
 
-function read_data(fn::String, metadata::Dict{Symbol,Any}; normalization::Symbol = :raw  )
+function read_data(fn::String, metadata::Dict{Symbol,Any}; kwargs...)
     f = FITS(fn)
-    read_data(f, metadata, normalization=normalization)
+    read_data(f, metadata; kwargs...)
 end
 
 function read_data(fn::String, metadata::Dict{Symbol,Any}, orders_to_read::AR; normalization::Symbol = :raw  )  where  { AR<:AbstractRange }
@@ -242,29 +250,34 @@ function read_data(fn::String, metadata::Dict{Symbol,Any}, orders_to_read::AR; n
     read_data(f, metadata, orders_to_read, normalization=normalization)
 end
 
-function read_data(fn::String; normalization::Symbol = :raw )
+function read_data(fn::String; normalization::Symbol = :raw, kwargs...)
     f = FITS(fn)
     hdr = FITSIO.read_header(f[1])
     metadata = Dict(zip(map(k->Symbol(k),hdr.keys),hdr.values))
-    read_data(f, metadata, normalization=normalization)
+    read_data(f, metadata; normalization=normalization, kwargs...)
 end
 
-function read_data(dfr::DataFrameRow{DataFrame,DataFrames.Index}; normalization::Symbol = :raw )
+function read_data(dfr::DataFrameRow{DataFrame,DataFrames.Index}; kwargs...)
     fn = dfr.Filename
     metadata = Dict(zip(keys(dfr),values(dfr)))
-    read_data(fn,metadata, normalization=normalization)
+    read_data(fn,metadata; kwargs...)
 end
 
-function read_data(fn::String, orders_to_read::AR; normalization::Symbol = :raw  ) where  { AR<:AbstractRange }
+function read_data(fn::String, metadata::Dict{Symbol,Any}, orders_to_read::AR; kwargs...) where  { AR<:AbstractRange }
+    f = FITS(fn)
+    read_data(f, metadata, orders_to_read; kwargs...)
+end
+
+function read_data(fn::String, orders_to_read::AR; kwargs...) where  { AR<:AbstractRange }
     f = FITS(fn)
     metadata = read_metadata(f)
-    read_data(f,metadata, orders_to_read, normalization=normalization)
+    read_data(f,metadata, orders_to_read; kwargs...)
 end
 
-function read_data(dfr::DataFrameRow{DataFrame,DataFrames.Index}, orders_to_read::AR; normalization::Symbol = :raw  ) where  { AR<:AbstractRange }
+function read_data(dfr::DataFrameRow{DataFrame,DataFrames.Index}, orders_to_read::AR; kwargs...) where  { AR<:AbstractRange }
     fn = dfr.Filename
     metadata = Dict(zip(keys(dfr),values(dfr)))
-    read_data(fn,metadata, orders_to_read, normalization=normalization)
+    read_data(fn, metadata, orders_to_read; kwargs...)
 end
 
 function apply_barycentric_correction!(λ::AbstractArray{T,1}, z::Real) where { T<:Real }
