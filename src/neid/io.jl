@@ -245,9 +245,9 @@ function read_data(fn::String, metadata::Dict{Symbol,Any}; kwargs...)
     read_data(f, metadata; kwargs...)
 end
 
-function read_data(fn::String, metadata::Dict{Symbol,Any}, orders_to_read::AR; normalization::Symbol = :raw  )  where  { AR<:AbstractRange }
+function read_data(fn::String, metadata::Dict{Symbol,Any}, orders_to_read::AR; kwargs...)  where  { AR<:AbstractRange }
     f = FITS(fn)
-    read_data(f, metadata, orders_to_read, normalization=normalization)
+    read_data(f, metadata, orders_to_read; kwargs...)
 end
 
 function read_data(fn::String; normalization::Symbol = :raw, kwargs...)
