@@ -145,7 +145,7 @@ function get_exposure_meter_summary(f::Union{FITS,String})
        end
        expmeter_mean_winsor = mean(sum(expmeter_data_winsor,dims=2),dims=1)[1,1]
        expmeter_rms_winsor = sqrt(var(sum(expmeter_data_winsor,dims=2),mean=expmeter_mean_winsor,corrected=false))
-       return Dict(:expmeter_mean => mean_expmeter, :expmeter_rms => rms_expmeter, :expmeter_mean_winsor=>expmeter_mean_winsor, :expmeter_rms_winsor=>expmeter_rms_winsor, :expmeter_mean_red=>mean_expmeter_red, :expmeter_rms_red=>rms_expmeter_red, :expmeter_mean_green=>mean_expmeter_green, :expmeter_rms_green=>rms_expmeter_green, :expmeter_mean_blue=>mean_expmeter_blue, :expmeter_rms_blue=>rms_expmeter_blue )) 
+       return Dict(:expmeter_mean => mean_expmeter, :expmeter_rms => rms_expmeter, :expmeter_mean_winsor=>expmeter_mean_winsor, :expmeter_rms_winsor=>expmeter_rms_winsor, :expmeter_mean_red=>mean_expmeter_red, :expmeter_rms_red=>rms_expmeter_red, :expmeter_mean_green=>mean_expmeter_green, :expmeter_rms_green=>rms_expmeter_green, :expmeter_mean_blue=>mean_expmeter_blue, :expmeter_rms_blue=>rms_expmeter_blue )
     catch ex
        if typeof(f) == String
           @warn("*** Error extracting exposure meter data for " * string(f))
