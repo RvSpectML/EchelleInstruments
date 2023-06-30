@@ -182,7 +182,7 @@ function add_metadata_from_fits!(df::DataFrame, fn::String)
     if haskey(metadata_keep,:airmass) && typeof(metadata_keep[:airmass]) == String
        metadata_keep[:airmass] = parse(Float64,metadata_keep[:airmass])
     end
-    push!(df, metadata_keep)
+    push!(df, metadata_keep, promote=true)
     return df
 end
 
