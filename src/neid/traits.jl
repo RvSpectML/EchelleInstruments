@@ -112,10 +112,10 @@ import RvSpectMLBase: metadata_symbols_default, metadata_strings_default
 # Headers at KPNO
 metadata_symbols_default(::AnyNEID) = Symbol[:bjd, :target, :exptime, :airmass, :ssbz,
                             :wavecal, :driftfun, :drpversion, :drpextsnr,
-                            :envotmp, :envohum, :envwinds, :envwindd ]
+                            :envotmp, :envohum, :envwinds, :envwindd, :dqlevel0, :dqlevel1, :dqlevel2 ]
 metadata_strings_default(::AnyNEID) = String["OBSJD", "OBJECT", "EXPTIME", "AIRMASS",  "SSBZ100",
                             "WAVECAL", "DRIFTFUN", "E_VER", "EXTSNR", 
-                            "ENVOTMP", "ENVOHUM", "ENVWINDS", "ENVWINDD" ]
+                            "ENVOTMP", "ENVOHUM", "ENVWINDS", "ENVWINDD", "DQLEVEL0", "DQLEVEL1", "DQLEVEL2" ]
 
 import RvSpectMLBase: default_ccf_mask_v_width
 default_ccf_mask_v_width(::AnyNEID) = 620.953
