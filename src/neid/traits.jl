@@ -44,6 +44,7 @@ function bad_col_ranges(inst::NEID2D, ord::Int)   # DRP v0.7
     end
 end
 =#
+#=
 function bad_col_ranges(inst::NEID2D, ord::Int)   # DRP v1.1
     if ord == 1      return [1:1718, 1936:1940, 7603:9216]
     elseif ord == 2  return [1:871, 1936:1940]
@@ -63,6 +64,53 @@ function bad_col_ranges(inst::NEID2D, ord::Int)   # DRP v1.1
     elseif 61 <= ord <= 120  return [437:451, 1930:1948, 6714:6714]
     elseif ord == 121        return [437:451, 986:4213, 6714:6714]
     elseif ord == 122        return [1:9216]
+    end
+end
+=#
+
+#=
+function bad_col_ranges(inst::NEID2D, ord::Int)   # DRP v1.2
+    if ord == 1      return [1:1718, 1936:1940, 7603:9216]
+    elseif ord == 2  return [1:871, 1936:1940]
+    elseif ord == 3  return [1:156, 437:451, 1936:1940, 7791:9216]
+    elseif ord == 4  return [1:230, 437:451, 1936:1940, 7895:9216]
+    elseif ord == 5  return [1:676, 1936:1940, 8499:9216]
+    elseif ord == 6  return [1:2396, 8330:9216]
+    elseif ord == 7  return [1:3157, 8052:9216]
+    elseif ord == 8  return [437:451, 1936:1940, 8452:9216]
+    elseif ord == 9  return [437:451, 1936:1940, 5449:8302]
+    elseif 10 <= ord <= 34   return [437:451, 1936:1940]
+    elseif 35 <= ord <= 36   return [437:451, 1936:1940, 4584:4584]
+    elseif 37 <= ord <= 44   return [437:451, 1936:1940, 4584:4584, 5404:5404]
+    elseif 45 <= ord <= 45   return [437:451, 1936:1940, 6714:6714]
+    elseif 46 <= ord <= 60   return [437:451, 1936:1948, 3199:3199, 6714:6714]
+    elseif 61 <= ord <= 120  return [437:451, 1930:1948, 6714:6714]
+    elseif ord == 121   return UnitRange[437:451, 1209:4876, 6714:6714]
+    elseif ord == 122   return UnitRange[1:9216]
+    end
+end
+=#
+
+function bad_col_ranges(inst::NEID2D, ord::Int)   # DRP v1.3
+    if ord == 1   return UnitRange[1:1735, 1936:1940, 7825:9216]
+    elseif ord == 2   return UnitRange[1:911, 914:914, 916:916, 1936:1940, 8263:9216]
+    elseif ord == 3   return UnitRange[1:223, 225:228, 437:451, 1936:1940, 7817:9216]
+    elseif ord == 4   return UnitRange[437:451, 1936:1940, 7810:9216]
+    elseif ord == 5   return UnitRange[1:756, 1936:1940, 9179:9216]
+    elseif ord == 6   return UnitRange[1:3111, 8037:9216]
+    elseif ord == 7   return UnitRange[1:3295, 8122:9216]
+    elseif ord == 8   return UnitRange[437:451, 1936:1940, 5636:7896]
+    elseif ord == 9   return UnitRange[437:451, 1936:1940, 5068:8143]
+    elseif 10 <= ord <= 34   return [437:451, 1936:1940]
+    elseif 35 <= ord <= 36   return [437:451, 1936:1940, 4584:4584]
+    elseif 37 <= ord <= 44   return [437:451, 1936:1940, 4584:4584, 5404:5404]
+    elseif 45 <= ord <= 45   return [437:451, 1936:1940, 6714:6714]
+    elseif 46 <= ord <= 60   return [437:451, 1936:1948, 3199:3199, 6714:6714]
+    elseif 61 <= ord <= 108  return [437:451, 1930:1948, 6714:6714]
+    elseif ord == 109        return UnitRange[437:451, 1930:1948, 3962:3962, 6714:6714]
+    elseif 110 <= ord <= 120  return [437:451, 1930:1948, 6714:6714]
+    elseif ord == 121   return UnitRange[1:1503, 1930:1948, 6129:9216]
+    elseif ord == 122   return UnitRange[1:9216]
     end
 end
 
