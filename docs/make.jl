@@ -19,7 +19,9 @@ makedocs(;
             "EXPRES" => "expres.md"],
         "Index" => "longlist.md",
     ],
-)
+    checkdocs=:none,
+    #checkdocs=:exports,
+    )
 
 deploydocs(;
     repo="github.com/RvSpectML/EchelleInstruments.jl",

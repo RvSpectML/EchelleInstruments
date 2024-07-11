@@ -248,11 +248,6 @@ function read_data(fn::String, metadata::Dict{Symbol,Any}; kwargs...)
     read_data(f, metadata; kwargs...)
 end
 
-function read_data(fn::String, metadata::Dict{Symbol,Any}, orders_to_read::AR; kwargs...)  where  { AR<:AbstractRange }
-    f = FITS(fn)
-    read_data(f, metadata, orders_to_read; kwargs...)
-end
-
 function read_data(fn::String; normalization::Symbol = :raw, kwargs...)
     f = FITS(fn)
     hdr = FITSIO.read_header(f[1])
